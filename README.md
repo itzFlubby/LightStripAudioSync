@@ -2,6 +2,8 @@
  
 LightStripAudioSync is a simple Windows tool that analyzes the audio stream of your default audio device and broadcasts frequency-dependent magnitudes over UDP for use with other devices, such as audio-synced LED strips.
 
+LightStripAudioSync is based on [FFTW3](https://fftw.org) and [RtAudio](https://github.com/thestk/rtaudio).
+
 ## Installation
 
 1. Clone the repository
