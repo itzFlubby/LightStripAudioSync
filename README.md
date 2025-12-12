@@ -8,18 +8,16 @@ LightStripAudioSync is based on [FFTW3](https://fftw.org) and [RtAudio](https://
 
 1. Clone the repository
 
-2. Create a folder called `FFTW`
-
-3. Copy the following files from the official [FFTW website](https://fftw.org/download.html) into the `FFTW` directory:
+2. Copy the following files from the official [FFTW website](https://fftw.org/download.html) into the `FFTW` directory:
   - fftw3.h
   - libfftw3-3.dll
   - libfftw3-3.lib
 
-4. Configure for your use-case
+3. Configure for your use-case
   - Set `BROADCAST_ADDRESS` in CMakeLists.txt 
   - Set your frequency weights in `main.cpp` (optional)
 
-5. Run Cmake
+4. Run Cmake
 ```
 mkdir build
 cd build
@@ -29,4 +27,4 @@ cmake --build . --config Release
 
 Hint: if `cmake ..` failes, check `cmake -G` any try building with a specific generator.
 
-6. Run `LightStripAudioSync.exe`
+5. Run `LightStripAudioSync.exe`
