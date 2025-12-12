@@ -1,0 +1,233 @@
+########################
+# Global Configuration #
+########################
+Language: Cpp
+BasedOnStyle: None
+ColumnLimit: 160
+DisableFormat: false
+LineEnding: CRLF
+Standard: Latest
+
+##########
+# Macros #
+##########
+AttributeMacros: [ ]
+CommentPragmas: "__CLANG_NO_FORMAT__"
+ForEachMacros: [ FOREACH ]
+IfMacros: [ IF ]
+MacroBlockBegin: "__CLANG_MACRO_BLOCK_BEGIN__"
+MacroBlockEnd: "__CLANG_MACRO_BLOCK_END__"
+Macros: [ ]
+NamespaceMacros: [ ]
+# OneLineFormatOffRegex: "^(// NO FORMAT)" # MSVC incompatible
+StatementAttributeLikeMacros: [ ]
+StatementMacros: [ ]
+# TemplateNames: [ ] # MSVC incompatible
+TypeNames: [ ]
+TypenameMacros: [ ]
+# VariableTemplates: [ ] # MSVC incompatible
+WhitespaceSensitiveMacros: [ ]
+
+##############
+# Alignments #
+##############
+AlignAfterOpenBracket: BlockIndent
+AlignArrayOfStructures: Left
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveBitFields: None
+AlignConsecutiveDeclarations: None
+AlignConsecutiveMacros: AcrossEmptyLinesAndComments
+AlignConsecutiveShortCaseStatements: 
+    Enabled: false
+AlignConsecutiveTableGenBreakingDAGArgColons: None
+AlignConsecutiveTableGenCondOperatorColons : None
+AlignConsecutiveTableGenDefinitionColons: None
+AlignEscapedNewlines: DontAlign
+AlignOperands: DontAlign
+AlignTrailingComments: Always
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowBreakBeforeNoexceptSpecifier: Never
+AllowShortBlocksOnASingleLine: Always
+AllowShortCaseExpressionOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortCompoundRequirementOnASingleLine: true
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortIfStatementsOnASingleLine: Always
+AllowShortLambdasOnASingleLine: All
+AllowShortLoopsOnASingleLine: false
+# AllowShortNamespacesOnASingleLine: true # MSVC incompatible
+AlwaysBreakBeforeMultilineStrings: false
+BinPackArguments: false
+# BinPackLongBracedList: true # MSVC incompatible
+BinPackParameters: false
+BitFieldColonSpacing: Both
+DerivePointerAlignment: false
+ExperimentalAutoDetectBinPacking: false
+PointerAlignment: Left
+QualifierAlignment: Left
+# QualifierOrder: [ static, volatile, const, inline, restrict, friend, type ]
+ReferenceAlignment: Left
+
+########################
+# Braces & Line Breaks #
+########################
+# BraceWrapping: # Controlled by BreakBeforeBraces
+BreakAdjacentStringLiterals: true
+BreakAfterAttributes: Never
+BreakAfterReturnType: Automatic
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Attach
+BreakBeforeConceptDeclarations: Always
+BreakBeforeInlineASMColon: OnlyMultiline
+# BreakBeforeTemplateCloser: true
+BreakBeforeTernaryOperators: false
+# BreakBinaryOperations: RespectPrecedence # MSVC incompatible
+BreakConstructorInitializers: AfterColon
+BreakFunctionDefinitionParameters: false
+BreakInheritanceList: AfterComma
+BreakStringLiterals: true
+BreakTemplateDeclarations: Yes
+CompactNamespaces: false
+EmptyLineAfterAccessModifier: Never
+EmptyLineBeforeAccessModifier: Always
+IndentCaseBlocks: false
+InsertBraces: false
+PackConstructorInitializers: CurrentLine
+RequiresClausePosition: OwnLine
+# WrapNamespaceBodyWithEmptyLines: Never # MSVC incompatible
+
+##########
+# Spaces #
+##########
+Cpp11BracedListStyle: false
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+# SpaceAfterOperatorKeyword: false
+SpaceAfterTemplateKeyword: false
+SpaceAroundPointerQualifiers: Default
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCaseColon: false
+SpaceBeforeCpp11BracedList: true
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+# SpaceBeforeParensOptions: # Controlled by SpaceBeforeParens
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceBeforeSquareBrackets: false
+SpaceInEmptyBlock: true
+SpacesBeforeTrailingComments: 1
+SpacesInAngles: Never
+SpacesInContainerLiterals: true
+SpacesInLineCommentPrefix:
+    Minimum: 1
+    Maximum: -1
+SpacesInParens: Never
+# SpacesInParensOptions: # Controlled by SpacesInParens
+SpacesInSquareBrackets: false
+
+###########
+# Indents #
+###########
+AccessModifierOffset: 0
+BracedInitializerIndentWidth: 4
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+IndentAccessModifiers: true # Also indents structs
+IndentCaseLabels: true
+# IndentExportBlock: true # MSVC incompatible
+IndentExternBlock: Indent
+IndentGotoLabels: false
+IndentPPDirectives: None
+IndentRequiresClause: true
+IndentWidth: 4
+IndentWrappedFunctionNames: true
+LambdaBodyIndentation: Signature
+NamespaceIndentation: All
+PPIndentWidth: -1
+RequiresExpressionIndentation: OuterScope
+TabWidth: 4
+UseTab: Never
+
+####################
+# Automatic format #
+####################
+# EnumTrailingComma: Remove
+FixNamespaceComments: true
+InsertNewlineAtEOF: true
+InsertTrailingCommas: None
+IntegerLiteralSeparator:
+    Binary: 4
+    BinaryMinDigits: 5
+    Decimal: 3
+    DecimalMinDigits : 7
+    Hex: 4
+    HexMinDigits: 8
+KeepEmptyLines:
+    AtEndOfFile: false
+    AtStartOfBlock: false
+    AtStartOfFile: false
+# KeepFormFeed: true # MSVC incompatible
+MaxEmptyLinesToKeep: 1
+RawStringFormats:
+    - Language: Cpp
+      Delimiters: 
+          - cc
+          - cxx
+          - cpp
+      BasedOnStyle: LLVM
+      CanonicalDelimiter: cc
+ReflowComments: false
+RemoveBracesLLVM: false
+# RemoveEmptyLinesInUnwrappedLines: true # MSVC incompatible
+RemoveParentheses: MultipleParentheses
+RemoveSemicolon: true
+SeparateDefinitionBlocks: Always
+ShortNamespaceLines: 0
+SkipMacroDefinitionBody: false
+
+####################
+# Includes & Using #
+####################
+IncludeBlocks: Regroup
+IncludeCategories: 
+    - Regex: "\"[^<\x2E>*<\n>].*\""
+      Priority: 0
+      SortPriority: 0
+    - Regex: "<.*>"
+      Priority: 1
+      SortPriority: 1
+    - Regex: "\"\x2E{2}\x2F[^\x2E][^\x2F\n]*\""
+      Priority: 2
+      SortPriority: 2
+    - Regex: "\"\x2E{2}\x2F[^\x2E].*\""
+      Priority: 2
+      SortPriority: 3
+    - Regex: "\"(\x2E{2}\x2F){2}[^\x2F\n]*\""
+      Priority: 4
+      SortPriority: 4
+    - Regex: "\"\x2E{2}\x2F\x2E{2}.*\""
+      Priority: 4
+      SortPriority: 5
+IncludeIsMainRegex: ""
+IncludeIsMainSourceRegex: ""
+MainIncludeChar: Quote
+SortIncludes: CaseInsensitive
+SortUsingDeclarations: Lexicographic
+    
+#############
+# Penalties #
+#############
+PenaltyBreakAssignment: 1
+PenaltyBreakBeforeFirstCallParameter: 1
+# PenaltyBreakBeforeMemberAccess: 1 # MSVC incompatible
+PenaltyBreakComment: 1
+PenaltyBreakFirstLessLess: 1
+PenaltyBreakOpenParenthesis: 1
+PenaltyBreakScopeResolution: 1
+PenaltyBreakString: 1
+PenaltyBreakTemplateDeclaration: 1
+PenaltyExcessCharacter: 1
+PenaltyIndentedWhitespace: 1
+PenaltyReturnTypeOnItsOwnLine: 1

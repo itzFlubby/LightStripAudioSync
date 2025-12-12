@@ -1,0 +1,4 @@
+build/*
+FFTW/*
+*.dll
+*.exe
