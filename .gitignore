@@ -1,4 +1,5 @@
 build/*
 FFTW/*
+!FFTW/.gitignore
 *.dll
 *.exe
