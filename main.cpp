@@ -9,10 +9,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if !defined(BROADCAST_ADDRESS)
-#define BROADCAST_ADDRESS "255.255.255.255" // Fallback broadcast address
-#endif
-
 double* magnitudes = (double*)calloc(2, sizeof(double));
 
 DataSender* dataSender     = nullptr;
@@ -83,8 +79,7 @@ int record(void* outputBuffer, void* inputBuffer, unsigned int nBufferFrames, do
     switch (mode) {
         case AUDIOCAPTURE_MODE_MONO_MAGNITUDE:
         case AUDIOCAPTURE_MODE_STEREO_MAGNITUDE: {
-            uint8_t converted[2] = { static_cast<uint8_t>(magnitudes[0] * 255), static_cast<uint8_t>(magnitudes[1] * 255) };
-            dataSender->sendMessage(converted);
+            dataSender->send_magnitudes(static_cast<uint8_t>(magnitudes[0] * 255), static_cast<uint8_t>(magnitudes[1] * 255));
             break;
         }
     }
@@ -109,10 +104,8 @@ int main() {
     if (!audioCapture || audioCapture->getSampleRate() == 0) { return cleanup_and_exit(1); }
     audioCapture->setOutputMode(AUDIOCAPTURE_MODE_STEREO_MAGNITUDE);
 
-    const char* broadcast_address = BROADCAST_ADDRESS;
-    unsigned short broadcast_port = 3333;
-    printf("[INFO] Opening broadcast to %s:%d...\n", broadcast_address, broadcast_port);
-    dataSender = new DataSender(broadcast_address, broadcast_port);
+    printf("[INFO] Starting data sender...\n");
+    dataSender = new DataSender();
     if (!dataSender || dataSender->initialize() != 0) { return cleanup_and_exit(1); }
 
     printf("[INFO] Streaming...\n");
@@ -120,7 +113,6 @@ int main() {
 
     char input;
     while (true) {
-        printf("> ");
         std::string input;
         std::getline(std::cin, input);
 
