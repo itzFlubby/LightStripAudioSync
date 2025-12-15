@@ -17,13 +17,7 @@ LightStripAudioSync is based on [FFTW3](https://fftw.org) and [RtAudio](https://
   - Set `BROADCAST_ADDRESS` in CMakeLists.txt 
   - Set your frequency weights in `main.cpp` (optional)
 
-4. Run Cmake
-```
-mkdir build
-cd build
-cmake ..
-cmake --build . --config Release
-```
+4. Run Cmake via `build.bat`
 
 Hint: if `cmake ..` failes, check `cmake -G` any try building with a specific generator.
 
