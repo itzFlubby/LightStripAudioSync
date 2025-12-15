@@ -6,7 +6,7 @@ AudioCapture::AudioCapture(unsigned int bufferFrames, uint8_t maxBands) {
     printf("[INFO] RtAudio API: %s\n", this->rtaudio->getApiName(this->rtaudio->getCurrentApi()).c_str());
 
     if (this->rtaudio->getDeviceCount() < 1) {
-        printf("[FAIL] No audio devices found!\n");
+        printf("[CRIT] No audio devices found!\n");
         return;
     }
 
@@ -63,7 +63,7 @@ bool AudioCapture::
         this->rtaudio->openStream(NULL, &(this->parameters), RTAUDIO_FLOAT64, this->sampleRate, &(this->bufferFrames), record);
         this->rtaudio->startStream();
     } catch (int e) {
-        printf("[FAIL] Failed to open stream with error code %d!\n", e);
+        printf("[CRIT] Failed to open stream with error code %d!\n", e);
         return false;
     }
     return true;
@@ -73,7 +73,7 @@ bool AudioCapture::closeStream() {
     try {
         this->rtaudio->stopStream();
     } catch (int e) {
-        printf("[FAIL] Failed to close stream with error code %d!\n", e);
+        printf("[CRIT] Failed to close stream with error code %d!\n", e);
         return false;
     }
 
