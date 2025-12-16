@@ -2,6 +2,8 @@
 
 #define NOMINMAX
 
+#include "Packet.hpp"
+
 #include <atomic>
 #include <mutex>
 #include <queue>
@@ -9,26 +11,10 @@
 #include <vector>
 #include <winsock2.h>
 
-// Link with ws2_32.lib
-#pragma comment(lib, "Ws2_32.lib")
-
 class DataSender {
     private:
-        constexpr static unsigned short port       = 3333;
-        constexpr static const char* data_discover = "DISCOVER_LIGHTSTRIP_AUDIOSYNC_DEVICE";
-        constexpr static const char* data_register = "REGISTER_LIGHTSTRIP_AUDIOSYNC_DEVICE";
-
-    public:
-        struct QueuedData {
-            public:
-                std::shared_ptr<uint8_t[]> data = nullptr;
-                size_t data_size                = 0;
-
-                enum class destination_t : uint8_t {
-                    broadcast = 0,
-                    device
-                } destination = destination_t::broadcast;
-        };
+        constexpr static unsigned short PORT               = 3333;
+        constexpr static unsigned RESEND_ZERO_PACKET_COUNT = 5;
 
     private:
         WSADATA wsa_data = {};
@@ -44,11 +30,16 @@ class DataSender {
         std::atomic<bool> discover_thread_is_running          = false;
         std::unique_ptr<std::thread> discover_thread_instance = nullptr;
 
-        std::mutex thread_mutex;
-        std::queue<QueuedData> send_queue     = {};
+        std::atomic<unsigned> zero_packet_count = 0;
+
+        std::mutex send_queue_mutex   = {};
+        std::queue<Packet> send_queue = {};
+
+        std::mutex destination_mutex          = {};
         std::vector<sockaddr_in> destinations = {};
 
-        bool send(const uint8_t* data, size_t data_size, sockaddr_in& address);
+        bool send(const Packet& packet);
+        bool send_raw(const sockaddr* address, const std::vector<uint8_t>& packet);
 
     public:
         DataSender(void) = default;
@@ -61,5 +52,5 @@ class DataSender {
         static void send_thread(DataSender* data_sender);
         static void discover_thread(DataSender* data_sender);
 
-        void enqueue(const uint8_t* data, size_t data_size, const QueuedData::destination_t destination);
+        void enqueue(const Packet& packet);
 };

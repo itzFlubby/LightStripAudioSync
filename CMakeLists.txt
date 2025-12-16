@@ -14,6 +14,7 @@ set(SOURCES
 set(HEADERS
     AudioCapture.hpp
     DataSender.hpp
+    Packet.hpp
     FFTW/fftw3.h
 )
 

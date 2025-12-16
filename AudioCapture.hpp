@@ -7,6 +7,7 @@
 class AudioCapture {
     private:
         constexpr static unsigned AUTOSCALE_TIME_WINDOW_MS = 1000;
+        constexpr static double AUTOSCALE_VALUE            = 0.99;
         constexpr static unsigned INPUT_BUFFER_SIZE        = 1024;
         constexpr static double MAX_FREQUENCY              = 2000.;
         constexpr static unsigned BINS_SIZE                = 20;
@@ -44,9 +45,8 @@ class AudioCapture {
         fftw_complex* fftw_out      = nullptr;
         fftw_plan fftw              = nullptr;
 
-        DataSender* data_sender         = nullptr;
-        std::unique_ptr<uint8_t[]> data = nullptr;
-        size_t data_size                = 0;
+        DataSender* data_sender   = nullptr;
+        std::vector<uint8_t> data = {};
 
         double last_autoscale = 0.;
 

@@ -31,11 +31,7 @@ AudioCapture::AudioCapture(DataSender* data_sender, unsigned input_buffer_size, 
     );
 
     // Reserve memory for magnitude data
-    this->data_size                 = this->parameters.nChannels + 3; // STX, LEN, <DATA>, ETX
-    this->data                      = std::make_unique<uint8_t[]>(this->data_size);
-    this->data[0]                   = 0x02;                       // STX
-    this->data[1]                   = this->parameters.nChannels; // LEN
-    this->data[this->data_size - 1] = 0x03;                       // ETX
+    this->data.resize(this->parameters.nChannels);
 
     // Initialize the bins
     this->bins.resize(this->parameters.nChannels, {});
@@ -101,20 +97,19 @@ int AudioCapture::record(void* output_buffer, void* input_buffer, unsigned input
         // Autoscale the magnitudes
         for (Bin& bin : audio_capture->bins[channel_index]) {
             if (bin.magnitude > bin.max_magnitude) { bin.max_magnitude = bin.magnitude; }
-            if (autoscale && ((bin.max_magnitude * 0.95) > bin.magnitude)) { bin.max_magnitude *= 0.95; }
+            if (autoscale && ((bin.max_magnitude * AudioCapture::AUTOSCALE_VALUE) > bin.magnitude)) { bin.max_magnitude *= AudioCapture::AUTOSCALE_VALUE; }
         }
 
         // Weights MUST be combined no more than 1.
-        audio_capture->data[2 + channel_index] = // Offset of 2 for ETX and LEN
-            static_cast<unsigned char>(std::min(
-                255.
-                    * (0.8 * audio_capture->bins[channel_index][0].get_normalized_magnitude() + 0.1 * audio_capture->bins[channel_index][1].get_normalized_magnitude()
-                       + 0.1 * audio_capture->bins[channel_index][2].get_normalized_magnitude()),
-                255.
-            ));
+        audio_capture->data[channel_index] = static_cast<unsigned char>(std::min(
+            255.
+                * (0.7 * audio_capture->bins[channel_index][0].get_normalized_magnitude() + 0.2 * audio_capture->bins[channel_index][1].get_normalized_magnitude()
+                   + 0.1 * audio_capture->bins[channel_index][2].get_normalized_magnitude()),
+            255.
+        ));
     }
 
-    audio_capture->data_sender->enqueue(audio_capture->data.get(), audio_capture->data_size, DataSender::QueuedData::destination_t::device);
+    audio_capture->data_sender->enqueue(Packet(Packet::destination_t::device, Packet::type_t::data, audio_capture->data.data(), audio_capture->data.size()));
 
     return 0;
 }

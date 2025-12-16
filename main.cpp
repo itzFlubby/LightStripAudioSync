@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Link with ws2_32.lib
+#pragma comment(lib, "Ws2_32.lib")
+
 DataSender* data_sender     = nullptr;
 AudioCapture* audio_capture = nullptr;
 
