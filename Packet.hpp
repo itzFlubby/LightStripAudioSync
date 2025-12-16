@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <vector>
 
+/* THE PACKET CLASS MUST CONSIST OF A SINGLE HEADER FILE FOR COMPATIBILITY WITH ESPHOME! */
+
 class Packet {
     private:
         constexpr static unsigned PACKET_LENGTH_OVERHEAD = 4;

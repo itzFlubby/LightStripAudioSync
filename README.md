@@ -1,39 +1,60 @@
 # LightStripAudioSync
  
 LightStripAudioSync is a simple Windows tool that analyzes the audio stream of your default audio device.
-It automatically discovers compatible devices on your network and sends them frequency-dependent magnitudes, i.e., for displaying a peakmeter.
+It automatically discovers compatible devices (from [esphome](https://esphome.io/) for example) on your network and sends them audio-channel-dependent magnitudes, i.e., for displaying a peakmeter.
 The auto-discovery process is explained in the section `Device discovery`.
 
 LightStripAudioSync is based on [FFTW3](https://fftw.org) and [RtAudio](https://github.com/thestk/rtaudio).
 ## Installation
 
-1. Clone the repository
+1. Clone the repository via `git clone https://github.com/itzFlubby/LightStripAudioSync.git`
 
-2. Copy the following files from the official [FFTW website](https://fftw.org/download.html) into the `FFTW` directory:
+2. Clone the submodules via `git submodule update --init --recursive`
+
+3. Copy the following files from the official [FFTW website](https://fftw.org/download.html) into the `FFTW` directory:
   - fftw3.h
   - libfftw3-3.dll
   - libfftw3-3.lib
 
-3. Optional: configure for your use-case
+4. Optional: configure for your use-case
   - Set your frequency weights in `AudioCapture.cpp`
 
-4. Run Cmake via `build.bat`
+5. Run Cmake via `build.bat`
 
 Hint: if `cmake ..` failes, check `cmake -G` any try building with a specific generator.
 
-5. Run `LightStripAudioSync.exe`
+6. Run `LightStripAudioSync.exe`
 
 ## Device discovery
 
-`LightStripAudioSync.exe` sends a UDP broadcast with the contents `"DISCOVER_LIGHTSTRIP_AUDIOSYNC_DEVICE"` every five seconds on port `3333`.
-Compatible devices on your network must reply to this message on the same port and with the message `"REGISTER_LIGHTSTRIP_AUDIOSYNC_DEVICE"`.
+The general protocol is defined as follows:
+```
+<STX><TYPE><LEN><DATA><ETX>
+```
+i.e.
+```
+Discover packet: 0x02 0x00 0x00 0x03
+Register packet: 0x02 0x01 0x00 0x03
+Data packet:     0x02 0x02 0x02 0x31 0x2f 0x03
+```
+
+For discovering devices, `LightStripAudioSync.exe` will send the disovery packet as a broadcast UDP packet every five seconds on port `3333`.
+Compatible devices on your network must reply to the broadcast with the register packet on the same port.
 `LightStripAudioSync.exe` will then start sending the device the magnitudes of the audio stream on your default audio device every ~30ms.
+`<LEN>` will be the number of channels of your default audio device and `<DATA>` the respective magnitudes for each channel.
 
 ## Integration with esphome
 
 Example config:
 
 ```yaml
+esphome:
+  name: lightstripaudiosync
+  friendly_name: "LightStripAudioSync"
+  
+  includes:
+    - LightStripAudioSync/Packet.hpp
+
 globals:
   - id: magnitudes
     type: uint8_t[2]
@@ -48,25 +69,20 @@ udp:
         - if:
             condition:
               lambda: |-
-                return (data.size() == 36) && (memcmp(data.data(), "DISCOVER_LIGHTSTRIP_AUDIOSYNC_DEVICE", data.size()) == 0);
+                Packet packet(reinterpret_cast<const char*>(data.data()), data.size());
+                return packet.is_valid() && packet.is_discover();
             then:
               - udp.write:
                   id: lightstrip_audiosync_listener
-                  data: "REGISTER_LIGHTSTRIP_AUDIOSYNC_DEVICE"
+                  data: !lambda |-
+                    Packet packet(Packet::destination_t::broadcast, Packet::type_t::register_, 0, 0); 
+                    return packet.to_raw();
+                    
         - lambda: |-
-            if (data.size() >= 3) { // Minimum packet length
-              if (data.data()[0] == 0x02) { // Check for STX
-                size_t data_size = data.data()[1];
-                if ((data_size + 3) == data.size()) { // Check for correct length
-                  if (data.data()[data_size + 2] == 0x03) { // Check for ETX
-                    switch (data_size) {
-                      case 2: {
-                        memcpy(id(magnitudes), data.data() + 2, data_size);
-                        break;
-                      }
-                    }
-                  }
-                }
+            Packet packet(reinterpret_cast<const char*>(data.data()), data.size());
+            if (packet.is_valid() && packet.is_data()) {
+              if (packet.get_payload_size() == 2) {
+                memcpy(id(magnitudes), packet.get_payload(), packet.get_payload_size());
               }
             }
 ```
