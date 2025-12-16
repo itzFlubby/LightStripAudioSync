@@ -1,7 +1,7 @@
 # LightStripAudioSync
  
 LightStripAudioSync is a simple Windows tool that analyzes the audio stream of your default audio device.
-It automatically discovers compatible devices (from [esphome](https://esphome.io/) for example) on your network and sends them audio-channel-dependent magnitudes, i.e., for displaying a peakmeter.
+It automatically discovers compatible devices on your network and sends them audio-channel-dependent magnitudes, i.e., for displaying a peakmeter. An example config for making [esphome](https://esphome.io/ devices compatible is shown in section `Integrating with esphome`.
 The auto-discovery process is explained in the section `Device discovery`.
 
 LightStripAudioSync is based on [FFTW3](https://fftw.org) and [RtAudio](https://github.com/thestk/rtaudio).
@@ -21,7 +21,7 @@ LightStripAudioSync is based on [FFTW3](https://fftw.org) and [RtAudio](https://
 
 5. Run Cmake via `build.bat`
 
-Hint: if `cmake ..` failes, check `cmake -G` any try building with a specific generator.
+Hint: if `cmake ..` fails, check `cmake -G` and try building with a specific generator.
 
 6. Run `LightStripAudioSync.exe`
 
@@ -38,12 +38,12 @@ Register packet: 0x02 0x01 0x00 0x03
 Data packet:     0x02 0x02 0x02 0x31 0x2f 0x03
 ```
 
-For discovering devices, `LightStripAudioSync.exe` will send the disovery packet as a broadcast UDP packet every five seconds on port `3333`.
-Compatible devices on your network must reply to the broadcast with the register packet on the same port.
+For discovering devices, `LightStripAudioSync.exe` sends a discovery packet as a broadcast UDP packet every five seconds on port `3333`.
+Compatible devices on your network must respond to the broadcast with a registration packet on the same port.
 `LightStripAudioSync.exe` will then start sending the device the magnitudes of the audio stream on your default audio device every ~30ms.
-`<LEN>` will be the number of channels of your default audio device and `<DATA>` the respective magnitudes for each channel.
+`<LEN>` will be the number of channels of your default audio device, and `<DATA>` the respective magnitudes for each channel.
 
-## Integration with esphome
+## Integrating with esphome
 
 Example config:
 
