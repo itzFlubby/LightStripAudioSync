@@ -15,7 +15,7 @@ LightStripAudioSync is based on [FFTW3](https://fftw.org) and [RtAudio](https://
   - libfftw3-3.lib
 
 3. Optional: configure for your use-case
-  - Set your frequency weights in `main.cpp`
+  - Set your frequency weights in `AudioCapture.cpp`
 
 4. Run Cmake via `build.bat`
 
@@ -25,9 +25,9 @@ Hint: if `cmake ..` failes, check `cmake -G` any try building with a specific ge
 
 ## Device discovery
 
-`LightStripAudioSync.exe` sends a UDP packet with the message `"DISCOVER_LIGHTSTRIP_AUDIOSYNC_DEVICE"` every five seconds on port `3333`.
+`LightStripAudioSync.exe` sends a UDP broadcast with the contents `"DISCOVER_LIGHTSTRIP_AUDIOSYNC_DEVICE"` every five seconds on port `3333`.
 Compatible devices on your network must reply to this message on the same port and with the message `"REGISTER_LIGHTSTRIP_AUDIOSYNC_DEVICE"`.
-`LightStripAudioSync.exe` will then send them the magnitudes of the audio stream on your default audio device every ~30ms.
+`LightStripAudioSync.exe` will then start sending the device the magnitudes of the audio stream on your default audio device every ~30ms.
 
 ## Integration with esphome
 
@@ -54,10 +54,19 @@ udp:
                   id: lightstrip_audiosync_listener
                   data: "REGISTER_LIGHTSTRIP_AUDIOSYNC_DEVICE"
         - lambda: |-
-            switch (data.size()) {
-              case 2: {
-                memcpy(id(magnitudes), data.data(), 2);
-                break;
+            if (data.size() >= 3) { // Minimum packet length
+              if (data.data()[0] == 0x02) { // Check for STX
+                size_t data_size = data.data()[1];
+                if ((data_size + 3) == data.size()) { // Check for correct length
+                  if (data.data()[data_size + 2] == 0x03) { // Check for ETX
+                    switch (data_size) {
+                      case 2: {
+                        memcpy(id(magnitudes), data.data() + 2, data_size);
+                        break;
+                      }
+                    }
+                  }
+                }
               }
             }
 ```
