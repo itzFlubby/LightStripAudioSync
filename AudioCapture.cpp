@@ -70,7 +70,9 @@ AudioCapture::~AudioCapture() {
 }
 
 int AudioCapture::record(void* output_buffer, void* input_buffer, unsigned input_buffer_size, double stream_time, RtAudioStreamStatus status, void* user_data) {
-    if ((status == RTAUDIO_INPUT_OVERFLOW) || (status == RTAUDIO_OUTPUT_UNDERFLOW)) { return status; }
+    if ((status == RTAUDIO_INPUT_OVERFLOW) || (status == RTAUDIO_OUTPUT_UNDERFLOW)) {
+        // These aren't fatal errors, therefore, ignore and continue
+    }
 
     AudioCapture* audio_capture = reinterpret_cast<AudioCapture*>(user_data);
 
