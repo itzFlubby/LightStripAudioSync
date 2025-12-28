@@ -12,22 +12,34 @@ class AudioCapture {
         constexpr static double MAX_FREQUENCY              = 2000.;
         constexpr static unsigned BINS_SIZE                = 20;
 
+        constexpr static double ENVELOPE_FOLLOWER_ATTACK  = 0.99; // Perceived as delay when peak is rising (higher is faster)
+        constexpr static double ENVELOPE_FOLLOWER_RELEASE = 0.75; // Perceived as delay when peak is falling (higher is faster)
+
         struct Bin {
             public:
                 double lower_frequency = 0.;
                 double upper_frequency = 0.;
                 double magnitude       = 0.;
-                double max_magnitude   = 0.;
+                double envelope        = 0.;
+                double max_envelope    = 0.;
 
-                // Normalize between 0.0 - 1.0
-                double get_normalized_magnitude(void) {
-                    if (this->max_magnitude == 0.) { return 0.; }
-                    return this->magnitude / this->max_magnitude; // max_magnitude is guaranteed to be greater or equal to magnitude
+                void follow_envelope(void) {
+                    if (this->magnitude > this->envelope) {
+                        this->envelope = ENVELOPE_FOLLOWER_ATTACK * this->magnitude + (1. - ENVELOPE_FOLLOWER_ATTACK) * this->envelope;
+                    } else {
+                        this->envelope = ENVELOPE_FOLLOWER_RELEASE * this->magnitude + (1. - ENVELOPE_FOLLOWER_RELEASE) * this->envelope;
+                    }
                 }
 
-                double get_normalized_magnitude_log(void) {
-                    if (this->max_magnitude == 0.) { return 0.; }
-                    return std::log10(1.0 + 9.0 * this->get_normalized_magnitude()); // 0 … 1
+                // Normalize between 0.0 - 1.0
+                double get_normalized_envelope(void) {
+                    if (this->max_envelope == 0.) { return 0.; }
+                    return this->envelope / this->max_envelope; // max_envelope is guaranteed to be greater or equal to magnitude
+                }
+
+                double get_normalized_envelope_log(void) {
+                    if (this->max_envelope == 0.) { return 0.; }
+                    return std::log10(1.0 + 9.0 * this->get_normalized_envelope()); // 0 … 1
                 }
         };
 
@@ -63,4 +75,6 @@ class AudioCapture {
         ~AudioCapture(void);
 
         unsigned initialize(void);
+
+        friend class Visualizer;
 };
