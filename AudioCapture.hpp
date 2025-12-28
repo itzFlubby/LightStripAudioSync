@@ -32,7 +32,8 @@ class AudioCapture {
         };
 
     private:
-        std::unique_ptr<RtAudio> rtaudio     = nullptr;
+        std::unique_ptr<RtAudio> rtaudio = nullptr;
+
         RtAudio::StreamParameters parameters = { 0 };
         unsigned sample_rate                 = 0;
         unsigned input_buffer_size           = 0;
@@ -41,9 +42,10 @@ class AudioCapture {
         std::vector<std::vector<Bin>> bins             = {}; // Channel dependent bins
         std::vector<unsigned> frame_index_to_bin_index = {}; // Cache frame index <> bin index for faster processing in record callback
 
-        std::vector<double> fftw_in = {};
-        fftw_complex* fftw_out      = nullptr;
-        fftw_plan fftw              = nullptr;
+        std::vector<double> hann_window = {};
+        std::vector<double> fftw_in     = {};
+        fftw_complex* fftw_out          = nullptr;
+        fftw_plan fftw                  = nullptr;
 
         DataSender* data_sender   = nullptr;
         std::vector<uint8_t> data = {};

@@ -56,6 +56,10 @@ AudioCapture::AudioCapture(DataSender* data_sender, unsigned input_buffer_size, 
         }
     }
 
+    this->hann_window.resize(this->input_buffer_size);
+    for (unsigned frame_index = 0; frame_index < this->input_buffer_size; ++frame_index) {
+        this->hann_window[frame_index] = 0.5 * (1.0 - cos(2.0 * M_PI * frame_index / (this->input_buffer_size - 1)));
+    }
     this->fftw_in.resize(this->input_buffer_size, 0.);
     this->fftw_out = reinterpret_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * this->output_buffer_size));
 }
@@ -75,7 +79,8 @@ int AudioCapture::record(void* output_buffer, void* input_buffer, unsigned input
 
     for (unsigned channel_index = 0; channel_index < audio_capture->parameters.nChannels; ++channel_index) {
         for (unsigned frame_index = 0; frame_index < input_buffer_size; ++frame_index) {
-            audio_capture->fftw_in[frame_index] = (reinterpret_cast<double*>(input_buffer))[frame_index * audio_capture->parameters.nChannels + channel_index];
+            audio_capture->fftw_in[frame_index] = (reinterpret_cast<double*>(input_buffer))[frame_index * audio_capture->parameters.nChannels + channel_index]
+                * audio_capture->hann_window[frame_index];
         }
 
         fftw_execute(audio_capture->fftw);
