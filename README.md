@@ -12,10 +12,10 @@ LightStripAudioSync is based on [FFTW3](https://fftw.org) and [RtAudio](https://
 
 2. Clone the submodules via `git submodule update --init --recursive`
 
-3. Copy the following files from the official [FFTW website](https://fftw.org/download.html) into the `FFTW` directory:
-    - fftw3.h
-    - libfftw3-3.dll
-    - libfftw3-3.lib
+3. Download the precompiled FFTW DLLs from the [FFTW website](https://www.fftw.org/install/windows.html):
+    - Copy `fftw3.h`, `libfftw3-3.dll`, and, `libfftw3-3.def` into the `FFTW` directory.
+    - Generate the `libfftw3-3.lib` with MSVC `lib.exe /def:libfftw3-3.def` in the `FFTW` directory.
+      Hint: The usual install path is `C:\Program Files\Microsoft Visual Studio\XX\Community\VC\Tools\MSVC\XX.XX.XXXXX\bin\Hostx64\x64\lib.exe`
 
 4. Optional: configure for your use-case
     - Set frequency weights in `AudioCapture.cpp`
