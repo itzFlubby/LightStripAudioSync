@@ -1,7 +1,11 @@
 #include "AudioCapture.hpp"
+#include "Visualizer.hpp"
 
 #define _USE_MATH_DEFINES
+
 #include <math.h>
+
+Visualizer visualizer;
 
 AudioCapture::AudioCapture(DataSender* data_sender, unsigned input_buffer_size, unsigned bins_size) :
     data_sender(data_sender),
@@ -101,22 +105,29 @@ int AudioCapture::record(void* output_buffer, void* input_buffer, unsigned input
             audio_capture->bins[channel_index][audio_capture->frame_index_to_bin_index[frame_index]].magnitude += frame_magnitude;
         }
 
-        // Autoscale the magnitudes
+        // Follow the magnitudes' envelopes
         for (Bin& bin : audio_capture->bins[channel_index]) {
-            if (bin.magnitude > bin.max_magnitude) { bin.max_magnitude = bin.magnitude; }
-            if (autoscale && ((bin.max_magnitude * AudioCapture::AUTOSCALE_VALUE) > bin.magnitude)) { bin.max_magnitude *= AudioCapture::AUTOSCALE_VALUE; }
+            bin.follow_envelope();
+        }
+
+        // Autoscale the envelopes
+        for (Bin& bin : audio_capture->bins[channel_index]) {
+            if (bin.envelope > bin.max_envelope) { bin.max_envelope = bin.envelope; }
+            if (autoscale && ((bin.max_envelope * AudioCapture::AUTOSCALE_VALUE) > bin.envelope)) { bin.max_envelope *= AudioCapture::AUTOSCALE_VALUE; }
         }
 
         // Weights MUST be combined no more than 1.
         audio_capture->data[channel_index] = static_cast<unsigned char>(std::min(
             255.
-                * (0.7 * audio_capture->bins[channel_index][0].get_normalized_magnitude() + 0.2 * audio_capture->bins[channel_index][1].get_normalized_magnitude()
-                   + 0.1 * audio_capture->bins[channel_index][2].get_normalized_magnitude()),
+                * (0.7 * audio_capture->bins[channel_index][0].get_normalized_envelope() + 0.2 * audio_capture->bins[channel_index][1].get_normalized_envelope()
+                   + 0.1 * audio_capture->bins[channel_index][2].get_normalized_envelope()),
             255.
         ));
     }
 
     audio_capture->data_sender->enqueue(Packet(Packet::destination_t::device, Packet::type_t::data, audio_capture->data.data(), audio_capture->data.size()));
+
+    //visualizer.render(audio_capture->bins); // Uncomment to enable console visualizer
 
     return 0;
 }
