@@ -7,13 +7,13 @@
 class AudioCapture {
     private:
         constexpr static unsigned AUTOSCALE_TIME_WINDOW_MS = 1000;
-        constexpr static double AUTOSCALE_VALUE            = 0.99;
+        constexpr static double AUTOSCALE_VALUE            = 0.95;
         constexpr static unsigned INPUT_BUFFER_SIZE        = 1024;
         constexpr static double MAX_FREQUENCY              = 2000.;
         constexpr static unsigned BINS_SIZE                = 20;
 
         constexpr static double ENVELOPE_FOLLOWER_ATTACK  = 0.99; // Perceived as delay when peak is rising (higher is faster)
-        constexpr static double ENVELOPE_FOLLOWER_RELEASE = 0.75; // Perceived as delay when peak is falling (higher is faster)
+        constexpr static double ENVELOPE_FOLLOWER_RELEASE = 0.40; // Perceived as delay when peak is falling (higher is faster)
 
         struct Bin {
             public:
