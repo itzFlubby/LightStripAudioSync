@@ -44,21 +44,28 @@ class Visualizer {
             char* output = new char[this->console_width * (this->console_height + 2)]();
 
             for (unsigned bin_index = 0; bin_index < bins[0].size(); ++bin_index) {
-                int magnitude = std::max(static_cast<int>(bins[0][bin_index].get_normalized_envelope() * this->console_width), 1);
                 memset(output + bin_index * this->console_width, ' ', this->console_width);
-                memset(output + bin_index * this->console_width, '#', magnitude);
+                for (unsigned channel_index = 0; channel_index < 2; ++channel_index) {
+                    int magnitude = std::max(static_cast<int>(bins[channel_index][bin_index].get_normalized_envelope() * this->console_width / 2), 1);
+                    if (channel_index == 0) {
+                        memset(output + bin_index * this->console_width + (this->console_width / 2 - magnitude), '#', magnitude);
+                    } else {
+                        memset(output + bin_index * this->console_width + (this->console_width / 2), '#', magnitude);
+                    }
+                }
             }
 
-            memset(output + bins[0].size() * this->console_width, ' ', this->console_width);
-            memset(
-                output + (bins[0].size() + 1) * this->console_width,
-                '#',
-                std::
-                    min(static_cast<unsigned>(
-                            this->console_width * (0.7 * bins[0][0].get_normalized_envelope() + 0.2 * bins[0][1].get_normalized_envelope() + 0.1 * bins[0][2].get_normalized_envelope())
-                        ),
-                        this->console_width)
-            );
+            memset(output + bins[0].size() * this->console_width, ' ', this->console_width * 2);
+            for (unsigned channel_index = 0; channel_index < 2; ++channel_index) {
+                int magnitude = (0.7 * bins[channel_index][0].get_normalized_envelope() + 0.2 * bins[channel_index][1].get_normalized_envelope()
+                                 + 0.1 * bins[channel_index][2].get_normalized_envelope())
+                    * this->console_width / 2;
+                if (channel_index == 0) {
+                    memset(output + (bins[0].size() + 1) * this->console_width + (this->console_width / 2 - magnitude), '#', magnitude);
+                } else {
+                    memset(output + (bins[0].size() + 1) * this->console_width + (this->console_width / 2), '#', magnitude);
+                }
+            }
 
             printf("%s", output);
 
