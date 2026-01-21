@@ -62,14 +62,14 @@ int DataSender::initialize(void) {
 #endif
 
     // Allow broadcasts by the socket
-    int broadcast = 1;
+    bool broadcast = true;
 #if defined(_WIN32)
-    if (setsockopt(this->socket, SOL_SOCKET, SO_BROADCAST, reinterpret_cast<char*>(&broadcast), sizeof(broadcast)) == SOCKET_ERROR) {
+    if (setsockopt(this->socket, SOL_SOCKET, SO_BROADCAST, reinterpret_cast<char*>(&broadcast), sizeof(char)) == SOCKET_ERROR) {
         printf("[CRIT] Enabling broadcast failed with error code %ld!\n", WSAGetLastError());
         return 1;
     }
 #else
-    if (setsockopt(this->socket, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)) == -1) {
+    if (setsockopt(this->socket, SOL_SOCKET, SO_BROADCAST, reinterpret_cast<int*>(&broadcast), sizeof(int)) == -1) {
         printf("[CRIT] Enabling broadcast failed with error code %ld!\n", errno);
         return 1;
     }
