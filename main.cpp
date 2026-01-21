@@ -2,9 +2,9 @@
 #include "DataSender.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <stdio.h>
 #include <stdlib.h>
-
 #if defined(_WIN32)
 // Link with ws2_32.lib
 #pragma comment(lib, "Ws2_32.lib")
@@ -56,7 +56,12 @@ int main(int argc, char* argv[]) {
         } else if (input == "exit" || input == "quit" || input == "q") {
             break;
         } else {
-            printf("Unknown command: %s\n", input.c_str());
+            if (!input.empty()) {
+                printf("Unknown command: %s\n", input.c_str());
+            } else {
+                // Wait a bit to reduce CPU load
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
         }
     }
 
