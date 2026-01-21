@@ -4,22 +4,19 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#if defined(_WIN32)
-constexpr RtAudio::Api RTAUDIO_API = RtAudio::WINDOWS_WASAPI;
-#elif defined(__linux__)
-constexpr RtAudio::Api RTAUDIO_API = RtAudio::LINUX_ALSA;
-#else
-#error "Unsupported platform"
-#endif
-
 Visualizer visualizer;
 
 AudioCapture::AudioCapture(DataSender* data_sender, unsigned input_buffer_size, unsigned bins_size) :
     data_sender(data_sender),
     input_buffer_size(input_buffer_size) {
-    this->rtaudio = std::make_unique<RtAudio>(RtAudio(RTAUDIO_API));
+    this->rtaudio = std::make_unique<RtAudio>();
 
-    printf("[INFO] RtAudio API: %s\n", this->rtaudio->getApiName(this->rtaudio->getCurrentApi()).c_str());
+    std::vector<RtAudio::Api> compiled_apis;
+    RtAudio::getCompiledApi(compiled_apis);
+    printf("[INFO] Compiled RtAudio APIs (* is used):\n");
+    for (RtAudio::Api api : compiled_apis) {
+        printf("  - %s %c\n", RtAudio::getApiName(api).c_str(), (api == this->rtaudio->getCurrentApi()) ? '*' : ' ');
+    }
 
     if (this->rtaudio->getDeviceCount() < 1) {
         printf("[CRIT] No audio devices found!\n");

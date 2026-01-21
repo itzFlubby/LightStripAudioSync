@@ -39,15 +39,11 @@ Hint: if `cmake ..` fails, check `cmake -G` and try building with a specific gen
     - Set frequency weights in `AudioCapture.cpp`
     - Set `MAX_FREQUENCY` and `BINS_SIZE` in `AudioCapture.hpp`
 
-4. Build:
-   ```
-   mkdir build
-   cd build
-   cmake ..
-   make
-   ```
+4. Run Cmake via `build.sh`
 
-5. Run `./LightStripAudioSync`
+Hint: if `cmake ..` fails, check `cmake -G` and try building with a specific generator.
+
+5. Run `./build/LightStripAudioSync`
 
 ## Device discovery
 
