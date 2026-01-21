@@ -14,10 +14,11 @@ constexpr RtAudio::Api API = RtAudio::Api::LINUX_ALSA;
 
 Visualizer visualizer;
 
-AudioCapture::AudioCapture(DataSender* data_sender, int device_id, unsigned input_buffer_size, unsigned bins_size) :
+AudioCapture::AudioCapture(DataSender* data_sender, std::string device_name, unsigned input_buffer_size, unsigned bins_size) :
     data_sender(data_sender),
     input_buffer_size(input_buffer_size) {
-    this->rtaudio = std::make_unique<RtAudio>(API);
+    this->rtaudio      = std::make_unique<RtAudio>(API);
+    unsigned device_id = this->rtaudio->getDefaultOutputDevice();
 
     std::vector<RtAudio::Api> compiled_apis;
     RtAudio::getCompiledApi(compiled_apis);
@@ -36,10 +37,10 @@ AudioCapture::AudioCapture(DataSender* data_sender, int device_id, unsigned inpu
     for (unsigned id : device_ids) {
         RtAudio::DeviceInfo info = this->rtaudio->getDeviceInfo(id);
         printf("  - %s (%d)\n", info.name.c_str(), info.ID);
-    }
 
-    // Set default device if none specified
-    if (device_id == -1) { device_id = this->rtaudio->getDefaultOutputDevice(); }
+        // Use device id from name if specified
+        if (!device_name.empty() && info.name == device_name) { device_id = info.ID; }
+    }
 
     RtAudio::DeviceInfo device_info = this->rtaudio->getDeviceInfo(device_id);
     this->parameters.deviceId       = device_info.ID;
