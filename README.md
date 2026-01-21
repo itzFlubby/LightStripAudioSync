@@ -1,12 +1,14 @@
 # LightStripAudioSync
  
-LightStripAudioSync is a simple Windows tool that analyzes the audio stream of your default audio device.
+LightStripAudioSync is a cross-platform tool that analyzes the audio stream of your default audio device.
 It automatically discovers compatible devices on your network and sends them audio-channel-dependent magnitudes, i.e., for displaying a peakmeter. 
 An example config for making [esphome](https://esphome.io/) devices compatible is shown in section `Integrating with esphome`.
 The auto-discovery process is explained in the section `Device discovery`.
 
 LightStripAudioSync is based on [FFTW3](https://fftw.org) and [RtAudio](https://github.com/thestk/rtaudio).
 ## Installation
+
+### Windows
 
 1. Clone the repository via `git clone https://github.com/itzFlubby/LightStripAudioSync.git`
 
@@ -26,6 +28,26 @@ LightStripAudioSync is based on [FFTW3](https://fftw.org) and [RtAudio](https://
 Hint: if `cmake ..` fails, check `cmake -G` and try building with a specific generator.
 
 6. Run `LightStripAudioSync.exe`
+
+### Linux
+
+1. Clone the repository via `git clone https://github.com/itzFlubby/LightStripAudioSync.git`
+
+2. Install dependencies: `sudo apt update && sudo apt install libfftw3-dev librtaudio-dev build-essential cmake`
+
+3. Optional: configure for your use-case
+    - Set frequency weights in `AudioCapture.cpp`
+    - Set `MAX_FREQUENCY` and `BINS_SIZE` in `AudioCapture.hpp`
+
+4. Build:
+   ```
+   mkdir build
+   cd build
+   cmake ..
+   make
+   ```
+
+5. Run `./LightStripAudioSync`
 
 ## Device discovery
 

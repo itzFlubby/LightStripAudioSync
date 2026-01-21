@@ -3,9 +3,13 @@
 #include <algorithm>
 #include <stdio.h>
 #include <string>
-#include <Ws2tcpip.h>
 
+#if defined(_WIN32)
+#include <Ws2tcpip.h>
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
+#else
+#include <errno.h>
+#endif
 
 DataSender::~DataSender(void) {
     int result;
@@ -25,42 +29,68 @@ DataSender::~DataSender(void) {
         this->discover_thread_instance->join();
     }
 
+#if defined(_WIN32)
     if ((result = closesocket(this->socket)) == SOCKET_ERROR) { printf("[CRIT] Closing the socket failed with error code %d!\n", WSAGetLastError()); }
-
     WSACleanup();
+#else
+    if (close(this->socket) == -1) { printf("[CRIT] Closing the socket failed with error code %d!\n", errno); }
+#endif
 }
 
 int DataSender::initialize(void) {
     int result = 0;
 
+#if defined(_WIN32)
     // Initialize WinSock
     if ((result = WSAStartup(MAKEWORD(2, 2), &this->wsa_data)) != NO_ERROR) {
         printf("[CRIT] WSAStartup failed with error code %d!\n", result);
         return result;
     }
+#endif
 
     // Create the socket
+#if defined(_WIN32)
     if ((this->socket = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET) {
         printf("[CRIT] Opening the socket failed with error code %ld!\n", WSAGetLastError());
         return 1;
     }
+#else
+    if ((this->socket = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+        printf("[CRIT] Opening the socket failed with error code %ld!\n", errno);
+        return 1;
+    }
+#endif
 
     // Allow broadcasts by the socket
     uint8_t broadcast = 1;
+#if defined(_WIN32)
     if (setsockopt(this->socket, SOL_SOCKET, SO_BROADCAST, reinterpret_cast<char*>(&broadcast), sizeof(broadcast)) == SOCKET_ERROR) {
         printf("[CRIT] Enabling broadcast failed with error code %ld!\n", WSAGetLastError());
         return 1;
     }
+#else
+    if (setsockopt(this->socket, SOL_SOCKET, SO_BROADCAST, reinterpret_cast<char*>(&broadcast), sizeof(broadcast)) == -1) {
+        printf("[CRIT] Enabling broadcast failed with error code %ld!\n", errno);
+        return 1;
+    }
+#endif
 
     // Bind socket to allow listening on the network
     sockaddr_in local_addr     = {};
     local_addr.sin_family      = AF_INET;
     local_addr.sin_port        = htons(PORT);
     local_addr.sin_addr.s_addr = INADDR_ANY;
+#if defined(_WIN32)
     if (bind(this->socket, reinterpret_cast<SOCKADDR*>(&local_addr), sizeof(local_addr)) == SOCKET_ERROR) {
         printf("[CRIT] Binding the socket failed with error code %d!\n", WSAGetLastError());
         return 1;
     }
+#else
+    if (bind(this->socket, reinterpret_cast<struct sockaddr*>(&local_addr), sizeof(local_addr)) == -1) {
+        printf("[CRIT] Binding the socket failed with error code %d!\n", errno);
+        return 1;
+    }
+#endif
 
     // Initialize broadcast address
     if (this->initialize_device("255.255.255.255") != 0) {
@@ -88,7 +118,11 @@ int DataSender::initialize_device(const char* destination_ip) {
     destination.sin_port    = htons(PORT);
 
     // Check if destination_ip is valid
+#if defined(_WIN32)
     if (InetPton(AF_INET, destination_ip, &destination.sin_addr.s_addr) == 1) {
+#else
+    if (inet_pton(AF_INET, destination_ip, &destination.sin_addr) == 1) {
+#endif
         this->destinations.push_back(destination);
     } else {
         printf("[CRIT] Invalid destination IP address %s!\n", destination_ip);
@@ -98,17 +132,25 @@ int DataSender::initialize_device(const char* destination_ip) {
 }
 
 void DataSender::listen_thread(DataSender* data_sender) {
-    char buffer[64]         = {};
-    sockaddr_in sender_addr = {};
-    int sender_addr_size    = sizeof(sender_addr);
+    char buffer[64]            = {};
+    sockaddr_in sender_addr    = {};
+    socklen_t sender_addr_size = sizeof(sender_addr);
 
     while (data_sender->listen_thread_is_running) {
         // Wait for data
+#if defined(_WIN32)
         int bytes_received = recvfrom(data_sender->socket, buffer, sizeof(buffer) - 1, 0, reinterpret_cast<SOCKADDR*>(&sender_addr), &sender_addr_size);
         if (bytes_received == SOCKET_ERROR) {
             printf("[CRIT] Receiving data failed with error code %d!\n", WSAGetLastError());
             continue;
         }
+#else
+        int bytes_received = recvfrom(data_sender->socket, buffer, sizeof(buffer) - 1, 0, reinterpret_cast<struct sockaddr*>(&sender_addr), &sender_addr_size);
+        if (bytes_received == -1) {
+            printf("[CRIT] Receiving data failed with error code %d!\n", errno);
+            continue;
+        }
+#endif
 
         Packet packet(buffer, bytes_received);
 
@@ -121,7 +163,11 @@ void DataSender::listen_thread(DataSender* data_sender) {
                         return dest.sin_addr.s_addr == sender_addr.sin_addr.s_addr;
                     })) {
                     char sender_ip[INET_ADDRSTRLEN] = {};
+#if defined(_WIN32)
                     InetNtop(AF_INET, &sender_addr.sin_addr, sender_ip, INET_ADDRSTRLEN);
+#else
+                    inet_ntop(AF_INET, &sender_addr.sin_addr, sender_ip, INET_ADDRSTRLEN);
+#endif
                     data_sender->initialize_device(sender_ip);
                     printf("[++++] Registered sync device:\n\tIP: %s\n", sender_ip);
                 }
@@ -191,9 +237,16 @@ bool DataSender::send(const Packet& packet) {
 }
 
 bool DataSender::send_raw(const sockaddr* address, const std::vector<uint8_t>& packet) {
+#if defined(_WIN32)
     if (sendto(this->socket, reinterpret_cast<const char*>(packet.data()), packet.size(), 0, address, sizeof(*address)) == SOCKET_ERROR) {
         printf("[CRIT] Sending to device failed with error code %d!\n", WSAGetLastError());
         return false;
     }
+#else
+    if (sendto(this->socket, reinterpret_cast<const char*>(packet.data()), packet.size(), 0, address, sizeof(*address)) == -1) {
+        printf("[CRIT] Sending to device failed with error code %d!\n", errno);
+        return false;
+    }
+#endif
     return true;
 }

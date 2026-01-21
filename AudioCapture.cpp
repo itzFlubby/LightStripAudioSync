@@ -2,15 +2,22 @@
 #include "Visualizer.hpp"
 
 #define _USE_MATH_DEFINES
-
 #include <math.h>
+
+#if defined(_WIN32)
+constexpr RtAudio::Api RTAUDIO_API = RtAudio::WINDOWS_WASAPI;
+#elif defined(__linux__)
+constexpr RtAudio::Api RTAUDIO_API = RtAudio::LINUX_ALSA;
+#else
+#error "Unsupported platform"
+#endif
 
 Visualizer visualizer;
 
 AudioCapture::AudioCapture(DataSender* data_sender, unsigned input_buffer_size, unsigned bins_size) :
     data_sender(data_sender),
     input_buffer_size(input_buffer_size) {
-    this->rtaudio = std::make_unique<RtAudio>(RtAudio(RtAudio::WINDOWS_WASAPI));
+    this->rtaudio = std::make_unique<RtAudio>(RtAudio(RTAUDIO_API));
 
     printf("[INFO] RtAudio API: %s\n", this->rtaudio->getApiName(this->rtaudio->getCurrentApi()).c_str());
 
@@ -19,9 +26,9 @@ AudioCapture::AudioCapture(DataSender* data_sender, unsigned input_buffer_size, 
         return;
     }
 
-    RtAudio::DeviceInfo device_info = this->rtaudio->getDeviceInfo(this->rtaudio->getDefaultOutputDevice());
+    RtAudio::DeviceInfo device_info = this->rtaudio->getDeviceInfo(this->rtaudio->getDefaultInputDevice()); //this->rtaudio->getDefaultOutputDevice());
     this->parameters.deviceId       = device_info.ID;
-    this->parameters.nChannels      = device_info.outputChannels;
+    this->parameters.nChannels      = std::max(device_info.outputChannels, device_info.inputChannels);
     this->sample_rate               = device_info.preferredSampleRate;
     this->input_buffer_size         = input_buffer_size;
     this->output_buffer_size        = this->input_buffer_size / 2 + 1;
@@ -127,7 +134,7 @@ int AudioCapture::record(void* output_buffer, void* input_buffer, unsigned input
 
     audio_capture->data_sender->enqueue(Packet(Packet::destination_t::device, Packet::type_t::data, audio_capture->data.data(), audio_capture->data.size()));
 
-    //visualizer.render(audio_capture->bins); // Uncomment to enable console visualizer
+    visualizer.render(audio_capture->bins); // Uncomment to enable console visualizer
 
     return 0;
 }

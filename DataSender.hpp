@@ -9,7 +9,16 @@
 #include <queue>
 #include <thread>
 #include <vector>
+
+#if defined(_WIN32)
 #include <winsock2.h>
+#include <Ws2tcpip.h>
+#else
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#endif
 
 class DataSender {
     private:
@@ -17,8 +26,12 @@ class DataSender {
         constexpr static unsigned RESEND_ZERO_PACKET_COUNT = 5;
 
     private:
+#if defined(_WIN32)
         WSADATA wsa_data = {};
         SOCKET socket    = INVALID_SOCKET;
+#else
+        int socket = -1;
+#endif
 
         std::atomic<bool> listen_thread_is_running          = false;
         std::unique_ptr<std::thread> listen_thread_instance = nullptr;

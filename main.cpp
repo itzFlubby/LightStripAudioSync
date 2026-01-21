@@ -4,8 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#if defined(_WIN32)
 // Link with ws2_32.lib
 #pragma comment(lib, "Ws2_32.lib")
+#endif
 
 DataSender* data_sender     = nullptr;
 AudioCapture* audio_capture = nullptr;
