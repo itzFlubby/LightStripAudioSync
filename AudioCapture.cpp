@@ -21,7 +21,7 @@ AudioCapture::AudioCapture(DataSender* data_sender, int device_id, unsigned inpu
 
     std::vector<RtAudio::Api> compiled_apis;
     RtAudio::getCompiledApi(compiled_apis);
-    printf("[INFO] Compiled RtAudio APIs (* is used):\n");
+    printf("[INFO] Compiled RtAudio APIs (* is in use):\n");
     for (RtAudio::Api api : compiled_apis) {
         printf("  - %s %c\n", RtAudio::getApiName(api).c_str(), (api == this->rtaudio->getCurrentApi()) ? '*' : ' ');
     }
@@ -31,8 +31,15 @@ AudioCapture::AudioCapture(DataSender* data_sender, int device_id, unsigned inpu
         return;
     }
 
+    std::vector<unsigned> device_ids = this->rtaudio->getDeviceIds();
+    printf("[INFO] Available audio devices:\n");
+    for (unsigned id : device_ids) {
+        RtAudio::DeviceInfo info = this->rtaudio->getDeviceInfo(id);
+        printf("  - %s (%d)\n", info.name.c_str(), info.ID);
+    }
+
     // Set default device if none specified
-    if (device_id == -1) { device_id = this->rtaudio->getDefaultInputDevice(); }
+    if (device_id == -1) { device_id = this->rtaudio->getDefaultOutputDevice(); }
 
     RtAudio::DeviceInfo device_info = this->rtaudio->getDeviceInfo(device_id);
     this->parameters.deviceId       = device_info.ID;
