@@ -4,12 +4,20 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#if defined(_WIN32)
+constexpr RtAudio::Api API = RtAudio::Api::WINDOWS_WASAPI;
+#elif defined(__linux__)
+constexpr RtAudio::Api API = RtAudio::Api::WINDOWS_WASAPI;
+#else
+#error "Unsupported platform!"
+#endif
+
 Visualizer visualizer;
 
 AudioCapture::AudioCapture(DataSender* data_sender, int device_id, unsigned input_buffer_size, unsigned bins_size) :
     data_sender(data_sender),
     input_buffer_size(input_buffer_size) {
-    this->rtaudio = std::make_unique<RtAudio>();
+    this->rtaudio = std::make_unique<RtAudio>(API);
 
     std::vector<RtAudio::Api> compiled_apis;
     RtAudio::getCompiledApi(compiled_apis);
