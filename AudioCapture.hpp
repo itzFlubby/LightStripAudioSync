@@ -10,6 +10,8 @@
 #include <RtAudio.h>
 #endif
 
+#include <cmath>
+
 class AudioCapture {
     private:
         constexpr static unsigned AUTOSCALE_TIME_WINDOW_MS = 1000;
