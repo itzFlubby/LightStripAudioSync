@@ -134,7 +134,7 @@ int AudioCapture::record(void* output_buffer, void* input_buffer, unsigned input
 
     audio_capture->data_sender->enqueue(Packet(Packet::destination_t::device, Packet::type_t::data, audio_capture->data.data(), audio_capture->data.size()));
 
-    visualizer.render(audio_capture->bins); // Uncomment to enable console visualizer
+    // visualizer.render(audio_capture->bins); // Uncomment to enable console visualizer
 
     return 0;
 }
