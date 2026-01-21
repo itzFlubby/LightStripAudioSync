@@ -1,8 +1,14 @@
 #pragma once
 
 #include "DataSender.hpp"
+
+#if defined(_WIN32)
 #include "FFTW/fftw3.h"
 #include "RtAudio/RtAudio.h"
+#else
+#include <fftw3.h>
+#include <RtAudio.h>
+#endif
 
 class AudioCapture {
     private:
