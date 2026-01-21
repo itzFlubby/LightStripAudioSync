@@ -79,7 +79,9 @@ class AudioCapture {
         static int record(void* output_buffer, void* input_buffer, unsigned input_buffer_size, double stream_time, RtAudioStreamStatus status, void* user_data);
 
     public:
-        AudioCapture(DataSender* data_sender, std::string device_name, bool use_input_device, unsigned input_buffer_size = INPUT_BUFFER_SIZE, unsigned bins_size = BINS_SIZE);
+        AudioCapture(
+            DataSender* data_sender, std::string device_name, bool use_input_device, unsigned max_channels, unsigned input_buffer_size = INPUT_BUFFER_SIZE, unsigned bins_size = BINS_SIZE
+        );
         ~AudioCapture(void);
 
         unsigned initialize(void);

@@ -14,7 +14,8 @@ constexpr RtAudio::Api API = RtAudio::Api::LINUX_ALSA;
 
 Visualizer visualizer;
 
-AudioCapture::AudioCapture(DataSender* data_sender, std::string device_name, bool use_input_device, unsigned input_buffer_size, unsigned bins_size) :
+AudioCapture::
+    AudioCapture(DataSender* data_sender, std::string device_name, bool use_input_device, unsigned max_channels, unsigned input_buffer_size, unsigned bins_size) :
     data_sender(data_sender),
     input_buffer_size(input_buffer_size) {
     this->rtaudio      = std::make_unique<RtAudio>(API);
@@ -45,10 +46,11 @@ AudioCapture::AudioCapture(DataSender* data_sender, std::string device_name, boo
 
     RtAudio::DeviceInfo device_info = this->rtaudio->getDeviceInfo(device_id);
     this->parameters.deviceId       = device_info.ID;
-    this->parameters.nChannels      = std::max(device_info.outputChannels, device_info.inputChannels); // If default input device is used instead of output
-    this->sample_rate               = device_info.preferredSampleRate;
-    this->input_buffer_size         = input_buffer_size;
-    this->output_buffer_size        = this->input_buffer_size / 2 + 1;
+    unsigned device_channels        = std::max(device_info.outputChannels, device_info.inputChannels);
+    this->parameters.nChannels = (max_channels > 0) ? std::min(max_channels, device_channels) : device_channels; // If default input device is used instead of output
+    this->sample_rate        = device_info.preferredSampleRate;
+    this->input_buffer_size  = input_buffer_size;
+    this->output_buffer_size = this->input_buffer_size / 2 + 1;
 
     if (this->parameters.nChannels == 0) {
         printf("[CRIT] Selected audio device has no input or output channels!\n");

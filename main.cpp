@@ -23,11 +23,17 @@ int cleanup_and_exit(int code) {
 int main(int argc, char* argv[]) {
     std::string device_name = "";
     bool use_input_device   = false;
-    if ((argc == 2) || (argc == 3)) {
+    unsigned max_channels   = 0;
+    if ((argc >= 2) && (argc <= 4)) {
         device_name = argv[1];
-        if (argc == 3) { use_input_device = (std::string(argv[2]) == "I") || (std::string(argv[2]) == "i"); }
-    } else if (argc > 2) {
-        printf("Usage: LightStripAudioSync <Device name (opt.)> <Device type 'I'/'O' (opt.)>\n");
+        if (argc == 3) {
+            use_input_device = (argv[2] == "I") || (argv[2] == "i");
+        } else if (argc == 4) {
+            std::string max_channels_str = argv[3];
+            if (std::all_of(max_channels_str.begin(), max_channels_str.end(), ::isdigit)) { max_channels = static_cast<unsigned>(std::stoi(max_channels_str)); }
+        }
+    } else if (argc > 4) {
+        printf("Usage: LightStripAudioSync <Device name (opt.)> <Device type 'I'/'O' (opt.)> <Max. channels (opt.))>\n");
         return 1;
     }
 
@@ -38,7 +44,7 @@ int main(int argc, char* argv[]) {
     if (!data_sender || data_sender->initialize() != 0) { return cleanup_and_exit(1); }
 
     printf("[INFO] Starting audio capture...\n");
-    audio_capture = new AudioCapture(data_sender, device_name, use_input_device);
+    audio_capture = new AudioCapture(data_sender, device_name, use_input_device, max_channels);
     if (!audio_capture || audio_capture->initialize() != 0) { return cleanup_and_exit(1); }
 
     char input;
