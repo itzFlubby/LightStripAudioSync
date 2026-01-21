@@ -7,7 +7,7 @@
 #if defined(_WIN32)
 constexpr RtAudio::Api API = RtAudio::Api::WINDOWS_WASAPI;
 #elif defined(__linux__)
-constexpr RtAudio::Api API = RtAudio::Api::LINUX_PULSE;
+constexpr RtAudio::Api API = RtAudio::Api::LINUX_ALSA;
 #else
 #error "Unsupported platform!"
 #endif
