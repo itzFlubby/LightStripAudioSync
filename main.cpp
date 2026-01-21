@@ -1,6 +1,7 @@
 #include "AudioCapture.hpp"
 #include "DataSender.hpp"
 
+#include <algorithm>
 #include <stdio.h>
 #include <stdlib.h>
 
