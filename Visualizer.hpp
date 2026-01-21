@@ -3,8 +3,15 @@
 #include "AudioCapture.hpp"
 
 #include <algorithm>
+#include <cstring>
+#include <iostream>
 #include <stdio.h>
+
+#if defined(_WIN32)
 #include <Windows.h>
+#else
+#include <sys/ioctl.h>
+#endif
 
 class Visualizer {
     private:
@@ -13,15 +20,23 @@ class Visualizer {
 
     public:
         Visualizer() {
+#if defined(_WIN32)
             CONSOLE_SCREEN_BUFFER_INFO csbi;
             GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
             this->console_width  = csbi.dwSize.X;
             this->console_height = csbi.dwSize.Y;
+#else
+            struct winsize w;
+            ioctl(fileno(stdout), TIOCGWINSZ, &w);
+            this->console_width  = w.ws_col;
+            this->console_height = w.ws_row;
+#endif
         }
 
         ~Visualizer() = default;
 
         void set_cursor_position(unsigned x, unsigned y) {
+#if defined(_WIN32)
             HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
             CONSOLE_SCREEN_BUFFER_INFO info;
             COORD pos = { 0, 0 };
@@ -36,6 +51,10 @@ class Visualizer {
             FillConsoleOutputCharacter(handle, ' ', info.dwSize.X * info.dwSize.Y, pos, &dw);
 
             SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+#else
+            printf("\033[2J\033[H");
+            fflush(stdout);
+#endif
         }
 
         void render(std::vector<std::vector<AudioCapture::Bin>>& bins) {
