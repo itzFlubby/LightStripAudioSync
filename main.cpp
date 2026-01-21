@@ -22,10 +22,12 @@ int cleanup_and_exit(int code) {
 
 int main(int argc, char* argv[]) {
     std::string device_name = "";
-    if (argc == 2) {
+    bool use_input_device   = false;
+    if ((argc == 2) || (argc == 3)) {
         device_name = argv[1];
+        if (argc == 3) { use_input_device = (std::string(argv[2]) == "I") || (std::string(argv[2]) == "i"); }
     } else if (argc > 2) {
-        printf("Usage: LightStripAudioSync <Device name (opt.)>\n");
+        printf("Usage: LightStripAudioSync <Device name (opt.)> <Device type 'I'/'O' (opt.)>\n");
         return 1;
     }
 
@@ -36,7 +38,7 @@ int main(int argc, char* argv[]) {
     if (!data_sender || data_sender->initialize() != 0) { return cleanup_and_exit(1); }
 
     printf("[INFO] Starting audio capture...\n");
-    audio_capture = new AudioCapture(data_sender, device_name);
+    audio_capture = new AudioCapture(data_sender, device_name, use_input_device);
     if (!audio_capture || audio_capture->initialize() != 0) { return cleanup_and_exit(1); }
 
     char input;

@@ -14,7 +14,7 @@ constexpr RtAudio::Api API = RtAudio::Api::LINUX_ALSA;
 
 Visualizer visualizer;
 
-AudioCapture::AudioCapture(DataSender* data_sender, std::string device_name, unsigned input_buffer_size, unsigned bins_size) :
+AudioCapture::AudioCapture(DataSender* data_sender, std::string device_name, bool use_input_device, unsigned input_buffer_size, unsigned bins_size) :
     data_sender(data_sender),
     input_buffer_size(input_buffer_size) {
     this->rtaudio      = std::make_unique<RtAudio>(API);
@@ -36,10 +36,11 @@ AudioCapture::AudioCapture(DataSender* data_sender, std::string device_name, uns
     printf("[INFO] Available audio devices:\n");
     for (unsigned id : device_ids) {
         RtAudio::DeviceInfo info = this->rtaudio->getDeviceInfo(id);
-        printf("  - %s (%d)\n", info.name.c_str(), info.ID);
+        printf("  - \"%s\" (%d) (I/O: %c)\n", info.name.c_str(), info.ID, (info.inputChannels > 0) ? 'I' : 'O');
 
         // Use device id from name if specified
-        if (!device_name.empty() && info.name == device_name) { device_id = info.ID; }
+        bool matches_io = use_input_device ? (info.inputChannels > 0) : (info.outputChannels > 0);
+        if (!(device_name.empty()) && (info.name == device_name) && matches_io) { device_id = info.ID; }
     }
 
     RtAudio::DeviceInfo device_info = this->rtaudio->getDeviceInfo(device_id);
