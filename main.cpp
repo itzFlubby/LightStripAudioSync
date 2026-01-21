@@ -19,7 +19,20 @@ int cleanup_and_exit(int code) {
     return code;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    int device_id = -1;
+    if (argc == 2) {
+        std::string s = argv[1];
+        if (!(!s.empty() && std::find_if(s.begin(), s.end(), [](unsigned char c) { return !std::isdigit(c); }) == s.end())) {
+            printf("Device Id must be an integer!\n");
+            return 1;
+        }
+        device_id = std::stoi(s);
+    } else if (argc > 2) {
+        printf("Usage: LightStripAudioSync <Device Id (opt.)>\n");
+        return 1;
+    }
+
     printf("[LightStripAudioSync]\n\n");
 
     printf("[INFO] Starting data sender...\n");
@@ -27,7 +40,7 @@ int main() {
     if (!data_sender || data_sender->initialize() != 0) { return cleanup_and_exit(1); }
 
     printf("[INFO] Starting audio capture...\n");
-    audio_capture = new AudioCapture(data_sender);
+    audio_capture = new AudioCapture(data_sender, device_id);
     if (!audio_capture || audio_capture->initialize() != 0) { return cleanup_and_exit(1); }
 
     char input;

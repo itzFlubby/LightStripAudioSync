@@ -6,7 +6,7 @@
 
 Visualizer visualizer;
 
-AudioCapture::AudioCapture(DataSender* data_sender, unsigned input_buffer_size, unsigned bins_size) :
+AudioCapture::AudioCapture(DataSender* data_sender, int device_id, unsigned input_buffer_size, unsigned bins_size) :
     data_sender(data_sender),
     input_buffer_size(input_buffer_size) {
     this->rtaudio = std::make_unique<RtAudio>();
@@ -23,12 +23,20 @@ AudioCapture::AudioCapture(DataSender* data_sender, unsigned input_buffer_size, 
         return;
     }
 
-    RtAudio::DeviceInfo device_info = this->rtaudio->getDeviceInfo(this->rtaudio->getDefaultOutputDevice());
+    // Set default device if none specified
+    if (device_id == -1) { device_id = this->rtaudio->getDefaultInputDevice(); }
+
+    RtAudio::DeviceInfo device_info = this->rtaudio->getDeviceInfo(device_id);
     this->parameters.deviceId       = device_info.ID;
     this->parameters.nChannels      = std::max(device_info.outputChannels, device_info.inputChannels); // If default input device is used instead of output
     this->sample_rate               = device_info.preferredSampleRate;
     this->input_buffer_size         = input_buffer_size;
     this->output_buffer_size        = this->input_buffer_size / 2 + 1;
+
+    if (this->parameters.nChannels == 0) {
+        printf("[CRIT] Selected audio device has no input or output channels!\n");
+        return;
+    }
 
     printf(
         "[++++] Registered audio device:\n\tId: %d\n\tChannels: %d\n\tSample rate: %d\n\tFormats: %#x\n",
