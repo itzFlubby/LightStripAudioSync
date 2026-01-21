@@ -54,4 +54,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     BROADCAST_ADDRESS=\"${BROADCAST_ADDRESS}\"
+    $<$<PLATFORM_ID:Windows>:__WINDOWS_WASAPI__>
+    $<$<PLATFORM_ID:Linux>:__LINUX_ALSA__>
 )
