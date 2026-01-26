@@ -68,8 +68,8 @@ AudioCapture::AudioCapture(DataSender* data_sender, std::string device_name, int
         device_info.nativeFormats
     );
 
-    // Reserve memory for magnitude data
-    this->data.resize(this->parameters.nChannels);
+    // Reserve memory for magnitude data (one byte magnitude + one byte log magnitude per channel)
+    this->data.resize(this->parameters.nChannels * 2);
 
     // Initialize the bins
     this->bins.resize(this->parameters.nChannels, {});
@@ -151,12 +151,17 @@ int AudioCapture::record(void* output_buffer, void* input_buffer, unsigned input
         }
 
         // Weights MUST be combined no more than 1.
-        audio_capture->data[channel_index] = static_cast<unsigned char>(std::min(
-            255.
-                * (0.7 * audio_capture->bins[channel_index][0].get_normalized_envelope() + 0.2 * audio_capture->bins[channel_index][1].get_normalized_envelope()
-                   + 0.1 * audio_capture->bins[channel_index][2].get_normalized_envelope()),
-            255.
-        ));
+
+        double (Bin::*envelope)(void);
+        for (unsigned type = 0; type <= 1; ++type) {
+            envelope                                               = (type == 0) ? &Bin::get_normalized_envelope : &Bin::get_normalized_envelope_log;
+            audio_capture->data[channel_index + type * n_channels] = static_cast<unsigned char>(std::min(
+                255.
+                    * (0.7 * (audio_capture->bins[channel_index][0].*envelope)() + 0.2 * (audio_capture->bins[channel_index][1].*envelope)()
+                       + 0.1 * (audio_capture->bins[channel_index][2].*envelope)()),
+                255.
+            ));
+        }
     }
 
     audio_capture->data_sender->enqueue(Packet(Packet::destination_t::device, Packet::type_t::data, audio_capture->data.data(), audio_capture->data.size()));
