@@ -14,12 +14,11 @@ constexpr RtAudio::Api API = RtAudio::Api::LINUX_ALSA;
 
 Visualizer visualizer;
 
-AudioCapture::
-    AudioCapture(DataSender* data_sender, std::string device_name, bool use_input_device, unsigned max_channels, unsigned input_buffer_size, unsigned bins_size) :
+AudioCapture::AudioCapture(DataSender* data_sender, std::string device_name, int device_id, int max_channels, unsigned input_buffer_size, unsigned bins_size) :
     data_sender(data_sender),
     input_buffer_size(input_buffer_size) {
-    this->rtaudio      = std::make_unique<RtAudio>(API);
-    unsigned device_id = this->rtaudio->getDefaultOutputDevice();
+    this->rtaudio = std::make_unique<RtAudio>(API);
+    if (device_name.empty() && (device_id == -1)) { device_id = this->rtaudio->getDefaultOutputDevice(); }
 
     std::vector<RtAudio::Api> compiled_apis;
     RtAudio::getCompiledApi(compiled_apis);
@@ -37,20 +36,24 @@ AudioCapture::
     printf("[INFO] Available audio devices:\n");
     for (unsigned id : device_ids) {
         RtAudio::DeviceInfo info = this->rtaudio->getDeviceInfo(id);
-        printf("  - \"%s\" (%d) (I/O: %c)\n", info.name.c_str(), info.ID, (info.inputChannels > 0) ? 'I' : 'O');
+        printf("  - \"%s\" (%d, %c)\n", info.name.c_str(), info.ID, (info.inputChannels > 0) ? 'I' : 'O');
 
         // Use device id from name if specified
-        bool matches_io = use_input_device ? (info.inputChannels > 0) : (info.outputChannels > 0);
-        if (!(device_name.empty()) && (info.name == device_name) && matches_io) { device_id = info.ID; }
+        if (!device_name.empty() && (info.name == device_name)) { device_id = info.ID; }
     }
 
     RtAudio::DeviceInfo device_info = this->rtaudio->getDeviceInfo(device_id);
-    this->parameters.deviceId       = device_info.ID;
-    unsigned device_channels        = std::max(device_info.outputChannels, device_info.inputChannels);
-    this->parameters.nChannels = (max_channels > 0) ? std::min(max_channels, device_channels) : device_channels; // If default input device is used instead of output
-    this->sample_rate        = device_info.preferredSampleRate;
-    this->input_buffer_size  = input_buffer_size;
-    this->output_buffer_size = this->input_buffer_size / 2 + 1;
+    if (device_info.ID != static_cast<unsigned>(device_id)) {
+        printf("[CRIT] Specified audio device not found!\n");
+        return;
+    }
+
+    this->parameters.deviceId  = device_info.ID;
+    unsigned device_channels   = std::max(device_info.outputChannels, device_info.inputChannels);
+    this->parameters.nChannels = (max_channels != -1) ? std::min(static_cast<unsigned>(max_channels), device_channels) : device_channels;
+    this->sample_rate          = device_info.preferredSampleRate;
+    this->input_buffer_size    = input_buffer_size;
+    this->output_buffer_size   = this->input_buffer_size / 2 + 1;
 
     if (this->parameters.nChannels == 0) {
         printf("[CRIT] Selected audio device has no input or output channels!\n");

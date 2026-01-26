@@ -80,7 +80,7 @@ class AudioCapture {
 
     public:
         AudioCapture(
-            DataSender* data_sender, std::string device_name, bool use_input_device, unsigned max_channels, unsigned input_buffer_size = INPUT_BUFFER_SIZE, unsigned bins_size = BINS_SIZE
+            DataSender* data_sender, std::string device_name = "", int device_id = -1, int max_channels = -1, unsigned input_buffer_size = INPUT_BUFFER_SIZE, unsigned bins_size = BINS_SIZE
         );
         ~AudioCapture(void);
 

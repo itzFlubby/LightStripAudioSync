@@ -22,18 +22,26 @@ int cleanup_and_exit(int code) {
 
 int main(int argc, char* argv[]) {
     std::string device_name = "";
-    bool use_input_device   = false;
-    unsigned max_channels   = 0;
-    if ((argc >= 2) && (argc <= 4)) {
-        device_name = argv[1];
-        if (argc == 3) {
-            use_input_device = (argv[2] == "I") || (argv[2] == "i");
-        } else if (argc == 4) {
-            std::string max_channels_str = argv[3];
-            if (std::all_of(max_channels_str.begin(), max_channels_str.end(), ::isdigit)) { max_channels = static_cast<unsigned>(std::stoi(max_channels_str)); }
+    int device_id           = -1;
+    int max_channels        = -1;
+
+    if ((argc >= 2) && (argc <= 3)) {
+        std::string device_name_or_id = argv[1];
+        if (std::all_of(device_name_or_id.begin(), device_name_or_id.end(), ::isdigit)) {
+            device_id = std::stoi(device_name_or_id);
+        } else {
+            device_name = device_name_or_id;
         }
-    } else if (argc > 4) {
-        printf("Usage: LightStripAudioSync <Device name (opt.)> <Device type 'I'/'O' (opt.)> <Max. channels (opt.))>\n");
+        if (argc == 3) {
+            std::string max_channels = argv[2];
+            if (std::all_of(max_channels.begin(), max_channels.end(), ::isdigit)) {
+                max_channels = std::stoi(max_channels);
+            } else {
+                printf("[WARN] Invalid max channels value: %s (expected a number)\n", max_channels.c_str());
+            }
+        }
+    } else if (argc > 3) {
+        printf("Usage: LightStripAudioSync <Device name or id (opt.)> <Max. channels (opt.)>\n");
         return 1;
     }
 
@@ -44,7 +52,7 @@ int main(int argc, char* argv[]) {
     if (!data_sender || data_sender->initialize() != 0) { return cleanup_and_exit(1); }
 
     printf("[INFO] Starting audio capture...\n");
-    audio_capture = new AudioCapture(data_sender, device_name, use_input_device, max_channels);
+    audio_capture = new AudioCapture(data_sender, device_name, device_id, max_channels);
     if (!audio_capture || audio_capture->initialize() != 0) { return cleanup_and_exit(1); }
 
     char input;
