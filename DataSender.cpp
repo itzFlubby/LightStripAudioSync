@@ -132,7 +132,7 @@ int DataSender::initialize_device(const char* destination_ip) {
 }
 
 void DataSender::listen_thread(DataSender* data_sender) {
-    char buffer[64]            = {};
+    static char buffer[64]     = {};
     sockaddr_in sender_addr    = {};
     socklen_t sender_addr_size = sizeof(sender_addr);
 

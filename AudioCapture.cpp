@@ -114,10 +114,12 @@ int AudioCapture::record(void* output_buffer, void* input_buffer, unsigned input
     bool autoscale = ((stream_time - audio_capture->last_autoscale) > (AUTOSCALE_TIME_WINDOW_MS / 1000.));
     if (autoscale) { audio_capture->last_autoscale = stream_time; }
 
-    for (unsigned channel_index = 0; channel_index < audio_capture->parameters.nChannels; ++channel_index) {
+    double* _input_buffer = reinterpret_cast<double*>(input_buffer);
+    unsigned n_channels   = audio_capture->parameters.nChannels;
+
+    for (unsigned channel_index = 0; channel_index < n_channels; ++channel_index) {
         for (unsigned frame_index = 0; frame_index < input_buffer_size; ++frame_index) {
-            audio_capture->fftw_in[frame_index] = (reinterpret_cast<double*>(input_buffer))[frame_index * audio_capture->parameters.nChannels + channel_index]
-                * audio_capture->hann_window[frame_index];
+            audio_capture->fftw_in[frame_index] = _input_buffer[frame_index * n_channels + channel_index] * audio_capture->hann_window[frame_index];
         }
 
         fftw_execute(audio_capture->fftw);
@@ -129,10 +131,8 @@ int AudioCapture::record(void* output_buffer, void* input_buffer, unsigned input
 
         // Bin the magnitudes
         for (unsigned frame_index = 0; frame_index < audio_capture->output_buffer_size; ++frame_index) {
-            double frame_magnitude = std::sqrt(
-                audio_capture->fftw_out[frame_index][0] * audio_capture->fftw_out[frame_index][0]
-                + audio_capture->fftw_out[frame_index][1] * audio_capture->fftw_out[frame_index][1]
-            );
+            double frame_magnitude = audio_capture->fftw_out[frame_index][0] * audio_capture->fftw_out[frame_index][0]
+                + audio_capture->fftw_out[frame_index][1] * audio_capture->fftw_out[frame_index][1]; // Don't sqrt to save computation, relative values are sufficient
             audio_capture->bins[channel_index][audio_capture->frame_index_to_bin_index[frame_index]].magnitude += frame_magnitude;
         }
 
@@ -173,7 +173,7 @@ unsigned AudioCapture::open_stream(void) {
         return result;
     }
 
-    if ((this->fftw = fftw_plan_dft_r2c_1d(this->input_buffer_size, this->fftw_in.data(), this->fftw_out, FFTW_ESTIMATE)) == NULL) {
+    if ((this->fftw = fftw_plan_dft_r2c_1d(this->input_buffer_size, this->fftw_in.data(), this->fftw_out, FFTW_MEASURE)) == NULL) {
         printf("[CRIT] Failed to create FFTW plan!\n");
         return 1;
     }
