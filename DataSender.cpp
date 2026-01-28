@@ -155,7 +155,7 @@ void DataSender::listen_thread(DataSender* data_sender) {
         Packet packet(buffer, bytes_received);
 
         if (packet.is_valid()) {
-            if (packet.is_register()) {
+            if (packet.is_register_device()) {
                 std::scoped_lock lock(data_sender->destination_mutex);
 
                 // Check if destination is already registered. Add to vector if not.
@@ -194,7 +194,7 @@ void DataSender::send_thread(DataSender* data_sender) {
 
 void DataSender::discover_thread(DataSender* data_sender) {
     while (data_sender->discover_thread_is_running) {
-        data_sender->enqueue(Packet(Packet::destination_t::broadcast, Packet::type_t::discover, 0, 0));
+        data_sender->enqueue(Packet(Packet::destination_t::broadcast, Packet::type_t::discover_device, 0, 0));
         std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 }

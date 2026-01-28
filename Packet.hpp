@@ -14,8 +14,8 @@ class Packet {
 
     public:
         enum class type_t : uint8_t {
-            discover = 0x00,
-            register_, // "register" is a reserved name
+            discover_device = 0x00,
+            register_device,
             data,
             undefined
         };
@@ -66,13 +66,13 @@ class Packet {
 
         bool is_valid(void) const { return (this->type != type_t::undefined); }
 
-        bool is_discover(void) const {
-            if ((this->type == type_t::discover) && (this->payload.size() == 0)) { return true; }
+        bool is_discover_device(void) const {
+            if ((this->type == type_t::discover_device) && (this->payload.size() == 0)) { return true; }
             return false;
         }
 
-        bool is_register(void) const {
-            if ((this->type == type_t::register_) && (this->payload.size() == 0)) { return true; }
+        bool is_register_device(void) const {
+            if ((this->type == type_t::register_device) && (this->payload.size() == 0)) { return true; }
             return false;
         }
 
