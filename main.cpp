@@ -1,5 +1,6 @@
 #include "AudioCapture.hpp"
 #include "DataSender.hpp"
+#include "Visualizer.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -12,6 +13,7 @@
 
 DataSender* data_sender     = nullptr;
 AudioCapture* audio_capture = nullptr;
+Visualizer visualizer;
 
 int cleanup_and_exit(int code) {
     if (data_sender) { delete data_sender; }
@@ -55,22 +57,29 @@ int main(int argc, char* argv[]) {
     audio_capture = new AudioCapture(data_sender, device_name, device_id, max_channels);
     if (!audio_capture || audio_capture->initialize() != 0) { return cleanup_and_exit(1); }
 
-    char input;
+    bool visualizer_active = false;
     while (true) {
+        if (visualizer_active) {
+            visualizer.render(audio_capture);
+            continue;
+        }
         std::string input;
         std::getline(std::cin, input);
 
         if (input == "help" || input == "?") {
             printf("Available commands:\n");
             printf("  help, ?       Show this help message\n");
+            printf("  visualizer    Opens the visualizer\n");
             printf("  exit, quit    Exit the program\n");
+        } else if (input == "visualizer") {
+            visualizer_active = true;
         } else if (input == "exit" || input == "quit" || input == "q") {
             break;
         } else {
             if (!input.empty()) {
-                printf("Unknown command: %s\n", input.c_str());
+                printf("Unknown command: \"%s\"\n", input.c_str());
             } else {
-                // Wait a bit to reduce CPU load
+                // Wait a bit to reduce CPU load (terminal probably doesn't support input)
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
         }

@@ -1,5 +1,4 @@
 #include "AudioCapture.hpp"
-#include "Visualizer.hpp"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -11,8 +10,6 @@ constexpr RtAudio::Api API = RtAudio::Api::LINUX_ALSA;
 #else
 #error "Unsupported platform!"
 #endif
-
-Visualizer visualizer;
 
 AudioCapture::AudioCapture(DataSender* data_sender, std::string device_name, int device_id, int max_channels, unsigned input_buffer_size, unsigned bins_size) :
     data_sender(data_sender),
@@ -165,8 +162,6 @@ int AudioCapture::record(void* output_buffer, void* input_buffer, unsigned input
     }
 
     audio_capture->data_sender->enqueue(Packet(Packet::destination_t::device, Packet::type_t::data, audio_capture->data.data(), audio_capture->data.size()));
-
-    // visualizer.render(audio_capture->bins); // Uncomment to enable console visualizer
 
     return 0;
 }
