@@ -19,7 +19,7 @@
 #include <unistd.h>
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR   -1
-typedef SOCKET int;
+typedef int SOCKET;
 #endif
 
 class DataSender {
