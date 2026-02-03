@@ -67,8 +67,9 @@ class AudioCapture {
         fftw_complex* fftw_out          = nullptr;
         fftw_plan fftw                  = nullptr;
 
-        DataSender* data_sender   = nullptr;
-        std::vector<uint8_t> data = {};
+        DataSender* data_sender             = nullptr;
+        std::vector<uint8_t> magnitude_data = {};
+        std::vector<uint8_t> bin_data       = {};
 
         double last_autoscale = 0.;
 
@@ -79,9 +80,7 @@ class AudioCapture {
         static int record(void* output_buffer, void* input_buffer, unsigned input_buffer_size, double stream_time, RtAudioStreamStatus status, void* user_data);
 
     public:
-        AudioCapture(
-            DataSender* data_sender, std::string device_name = "", int device_id = -1, int max_channels = -1, unsigned input_buffer_size = INPUT_BUFFER_SIZE, unsigned bins_size = BINS_SIZE
-        );
+        AudioCapture(DataSender* data_sender, std::string device_name = "", int device_id = -1, int max_channels = -1);
         ~AudioCapture(void);
 
         unsigned initialize(void);

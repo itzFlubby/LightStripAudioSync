@@ -33,17 +33,19 @@ Hint: if `cmake ..` fails, check `cmake -G` and try building with a specific gen
 
 1. Clone the repository via `git clone https://github.com/itzFlubby/LightStripAudioSync.git`
 
-2. Install dependencies: `sudo apt update && sudo apt install libfftw3-dev librtaudio-dev build-essential cmake`
+2. Clone the submodules via `git submodule update --init --recursive`
 
-3. Optional: configure for your use-case
+3. Install dependencies: `sudo apt update && sudo apt install libfftw3-dev librtaudio-dev build-essential cmake`
+
+4. Optional: configure for your use-case
     - Set frequency weights in `AudioCapture.cpp`
     - Set `MAX_FREQUENCY` and `BINS_SIZE` in `AudioCapture.hpp`
 
-4. Run Cmake via `build.sh`
+5. Run Cmake via `build.sh`
 
 Hint: if `cmake ..` fails, check `cmake -G` and try building with a specific generator.
 
-5. Run `./build/LightStripAudioSync`
+6. Run `./build/LightStripAudioSync`
 
 ## Device discovery
 

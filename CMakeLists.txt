@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(LightStripAudioSync LANGUAGES CXX)
+project(LightStripAudioSync LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,14 +17,7 @@ set(SOURCES
     $<$<PLATFORM_ID:Windows>:RtAudio/RtAudio.cpp>
 )
 
-set(HEADERS
-    AudioCapture.hpp
-    DataSender.hpp
-    Packet.hpp
-    $<$<PLATFORM_ID:Windows>:FFTW/fftw3.h>
-)
-
-add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+add_executable(${PROJECT_NAME} ${SOURCES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}
@@ -40,10 +33,12 @@ endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    $<$<PLATFORM_ID:Windows>:${CMAKE_CURRENT_SOURCE_DIR}/RtAudio>
     $<$<PLATFORM_ID:Windows>:${CMAKE_CURRENT_SOURCE_DIR}/FFTW>
     $<$<PLATFORM_ID:Linux>:${FFTW_INCLUDE_DIRS}>
+    $<$<PLATFORM_ID:Windows>:${CMAKE_CURRENT_SOURCE_DIR}/RtAudio>
     $<$<PLATFORM_ID:Linux>:${RTAUDIO_INCLUDE_DIRS}>
+    ${CMAKE_CURRENT_SOURCE_DIR}/websocketpp
+    $<$<PLATFORM_ID:Windows>:${CMAKE_CURRENT_SOURCE_DIR}/asio/include>
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE

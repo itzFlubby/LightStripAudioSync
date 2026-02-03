@@ -11,9 +11,7 @@ constexpr RtAudio::Api API = RtAudio::Api::LINUX_ALSA;
 #error "Unsupported platform!"
 #endif
 
-AudioCapture::AudioCapture(DataSender* data_sender, std::string device_name, int device_id, int max_channels, unsigned input_buffer_size, unsigned bins_size) :
-    data_sender(data_sender),
-    input_buffer_size(input_buffer_size) {
+AudioCapture::AudioCapture(DataSender* data_sender, std::string device_name, int device_id, int max_channels) : data_sender(data_sender) {
     this->rtaudio = std::make_unique<RtAudio>(API);
     if (device_name.empty() && (device_id == -1)) { device_id = this->rtaudio->getDefaultOutputDevice(); }
 
@@ -49,7 +47,7 @@ AudioCapture::AudioCapture(DataSender* data_sender, std::string device_name, int
     unsigned device_channels   = std::max(device_info.outputChannels, device_info.inputChannels);
     this->parameters.nChannels = (max_channels != -1) ? std::min(static_cast<unsigned>(max_channels), device_channels) : device_channels;
     this->sample_rate          = device_info.preferredSampleRate;
-    this->input_buffer_size    = input_buffer_size;
+    this->input_buffer_size    = INPUT_BUFFER_SIZE;
     this->output_buffer_size   = this->input_buffer_size / 2 + 1;
 
     if (this->parameters.nChannels == 0) {
@@ -66,12 +64,15 @@ AudioCapture::AudioCapture(DataSender* data_sender, std::string device_name, int
     );
 
     // Reserve memory for magnitude data (one byte magnitude + one byte log magnitude per channel)
-    this->data.resize(this->parameters.nChannels * 2);
+    this->magnitude_data.resize(this->parameters.nChannels * 2);
+
+    // Reserve memory for bin data
+    this->bin_data.resize(BINS_SIZE * this->parameters.nChannels);
 
     // Initialize the bins
     this->bins.resize(this->parameters.nChannels, {});
     for (unsigned channel_index = 0; channel_index < this->bins.size(); ++channel_index) {
-        this->bins[channel_index].resize(bins_size, {});
+        this->bins[channel_index].resize(BINS_SIZE, {});
         for (unsigned bin_index = 0; bin_index < this->bins[channel_index].size(); ++bin_index) {
             this->bins[channel_index][bin_index].lower_frequency = (bin_index == 0) ? 0 : this->bins[channel_index][bin_index - 1].upper_frequency;
             this->bins[channel_index][bin_index].upper_frequency =
@@ -136,23 +137,25 @@ int AudioCapture::record(void* output_buffer, void* input_buffer, unsigned input
             audio_capture->bins[channel_index][audio_capture->frame_index_to_bin_index[frame_index]].magnitude += frame_magnitude;
         }
 
-        // Follow the magnitudes' envelopes
         for (Bin& bin : audio_capture->bins[channel_index]) {
+            // Follow the magnitudes' envelopes
             bin.follow_envelope();
-        }
 
-        // Autoscale the envelopes
-        for (Bin& bin : audio_capture->bins[channel_index]) {
+            // Autoscale the envelopes
             if (bin.envelope > bin.max_envelope) { bin.max_envelope = bin.envelope; }
             if (autoscale && ((bin.max_envelope * AudioCapture::AUTOSCALE_VALUE) > bin.envelope)) { bin.max_envelope *= AudioCapture::AUTOSCALE_VALUE; }
+
+            // Add to bin_data
+            size_t index                                               = &bin - &audio_capture->bins[channel_index][0];
+            audio_capture->bin_data[index + BINS_SIZE * channel_index] = static_cast<uint8_t>(255. * bin.get_normalized_envelope());
         }
 
         // Weights MUST be combined no more than 1.
 
         double (Bin::*envelope)(void);
         for (unsigned type = 0; type <= 1; ++type) {
-            envelope                                               = (type == 0) ? &Bin::get_normalized_envelope : &Bin::get_normalized_envelope_log;
-            audio_capture->data[channel_index + type * n_channels] = static_cast<unsigned char>(std::min(
+            envelope                                                         = (type == 0) ? &Bin::get_normalized_envelope : &Bin::get_normalized_envelope_log;
+            audio_capture->magnitude_data[channel_index + type * n_channels] = static_cast<unsigned char>(std::min(
                 255.
                     * (0.7 * (audio_capture->bins[channel_index][0].*envelope)() + 0.2 * (audio_capture->bins[channel_index][1].*envelope)()
                        + 0.1 * (audio_capture->bins[channel_index][2].*envelope)()),
@@ -161,8 +164,10 @@ int AudioCapture::record(void* output_buffer, void* input_buffer, unsigned input
         }
     }
 
-    audio_capture->data_sender->enqueue(Packet(Packet::destination_t::device, Packet::type_t::data, audio_capture->data.data(), audio_capture->data.size()));
-
+    audio_capture->data_sender->udp_enqueue(
+        Packet(Packet::destination_t::device, Packet::type_t::data, audio_capture->magnitude_data.data(), audio_capture->magnitude_data.size())
+    );
+    audio_capture->data_sender->tcp_enqueue(Packet(Packet::destination_t::device, Packet::type_t::data, audio_capture->bin_data.data(), audio_capture->bin_data.size()));
     return 0;
 }
 
