@@ -62,11 +62,11 @@ async def ws_handler(websocket):
 async def main():
     asyncio.create_task(ws_pipe_tcp())
 
-    await websockets.serve(ws_handler, HOST, WS_PORT)
+    await websockets.serve(ws_handler, "0.0.0.0", WS_PORT)
     print(f"[++++] Started WebSocket on port {WS_PORT}!")
 
     if ssl_context:
-        await websockets.serve(ws_handler, HOST, WSS_PORT, ssl=ssl_context)
+        await websockets.serve(ws_handler, "0.0.0.0", WSS_PORT, ssl=ssl_context)
         print(f"[++++] Started WebSocket (TLS) on port {WSS_PORT}!")
 
     # Run forever
