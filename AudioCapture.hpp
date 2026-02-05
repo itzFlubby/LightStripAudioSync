@@ -20,7 +20,7 @@ class AudioCapture {
         constexpr static double MAX_FREQUENCY              = 5000.;
         constexpr static unsigned BINS_SIZE                = 30;
 
-        constexpr static double ENVELOPE_FOLLOWER_ATTACK  = 0.99; // Perceived as delay when peak is rising (higher is faster)
+        constexpr static double ENVELOPE_FOLLOWER_ATTACK  = 0.70; // Perceived as delay when peak is rising (higher is faster)
         constexpr static double ENVELOPE_FOLLOWER_RELEASE = 0.30; // Perceived as delay when peak is falling (higher is faster)
 
         struct Bin {
