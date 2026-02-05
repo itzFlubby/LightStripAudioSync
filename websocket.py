@@ -50,10 +50,12 @@ async def ws_handler(websocket):
 
 
 async def main():
-    pipe = asyncio.create_task(ws_pipe_tcp())
+    asyncio.create_task(ws_pipe_tcp())
 
-    async with websockets.serve(ws_handler, HOST, WS_PORT) as server:
-        await asyncio.Future()  # run forever
+    await websockets.serve(ws_handler, HOST, WS_PORT)
+
+    # Run forever
+    await asyncio.Future()
 
 
 if __name__ == "__main__":
