@@ -53,6 +53,9 @@ function init() {
         document.getElementById("visualizer-channel-bar-simulated-right-id")
     ];
 
+    // Ensure the simulated bars have the same height as the others are wide
+    resize_simulated_bars();
+
     // Cache to reduce DOM lookups
     footer_elements = [
         document.getElementById("footer-element-frames-id").firstChild,
@@ -76,6 +79,12 @@ function init() {
     if (location.search.includes("auto")) {
         ws_connect();
     }
+}
+
+function resize_simulated_bars() {
+    const height = window.getComputedStyle(channel_bars_left[0]).width;
+    channel_bars_simulated[0].style.height = height;
+    channel_bars_simulated[1].style.height = height;
 }
 
 function update_magnitudes(magnitudes) {
@@ -188,4 +197,5 @@ function ws_toggle_connection() {
 document.addEventListener("DOMContentLoaded", () => {
     background = new Background();
     init();
+    window.addEventListener("resize", () => resize_simulated_bars());
 });

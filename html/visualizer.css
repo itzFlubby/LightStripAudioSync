@@ -46,7 +46,12 @@
 }
 
 .visualizer-channel-bars-container-simulated-left {
-    justify-content: end;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.visualizer-channel-bars-container-simulated-right {
+    align-items: center;
 }
 
 .visualizer-channel-bar-left, .visualizer-channel-bar-right {
