@@ -1,11 +1,20 @@
+import sys
 import asyncio
 import websockets
+
+ssl_context = None
+if len(sys.argv) == 3:
+    import ssl
+
+    ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ssl_context.load_cert_chain(sys.argv[1], sys.argv[2])
 
 BUFFER_SIZE = 1024
 
 HOST = "127.0.0.1"
 TCP_PORT = 3334
 WS_PORT = 3335
+WSS_PORT = 3336
 
 ws_clients = set()
 
@@ -15,6 +24,7 @@ async def ws_pipe_tcp():
         try:
             print(f"[INFO] Starting data pipe from {HOST}:{TCP_PORT}...")
             tcp_reader, _ = await asyncio.open_connection(HOST, TCP_PORT)
+            print(f"[++++] Pipe connected!")
 
             while True:
                 data = await tcp_reader.read(BUFFER_SIZE)
@@ -53,6 +63,9 @@ async def main():
     asyncio.create_task(ws_pipe_tcp())
 
     await websockets.serve(ws_handler, HOST, WS_PORT)
+
+    if ssl_context:
+        await websockets.serve(ws_handler, HOST, WSS_PORT, ssl=ssl_context)
 
     # Run forever
     await asyncio.Future()
