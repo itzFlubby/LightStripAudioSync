@@ -78,8 +78,8 @@ class Background {
     }
 
     resize_canvas() {
-        this.canvas.width = window.innerWidth / 2; // Scale down resolution to reduce GPU load
-        this.canvas.height = window.innerHeight / 2;
+        this.canvas.width = window.innerWidth; // Scale down resolution to reduce GPU load
+        this.canvas.height = window.innerHeight;
         this.gradient = this.context.createLinearGradient(0, 0, this.canvas.width, this.canvas.height);
         this.gradient.addColorStop(0.0, "#02091a");
         this.gradient.addColorStop(0.5, "#071322");
@@ -87,7 +87,7 @@ class Background {
     }
 
     initialize_dots() {
-        const dots_size = Math.floor((this.canvas.width * this.canvas.height) / 20000);
+        const dots_size = Math.floor((this.canvas.width * this.canvas.height) / 15000);
         this.dots = [];
         for (let i = 0; i < dots_size; i++) {
             this.dots.push(new Dot(this.canvas));
