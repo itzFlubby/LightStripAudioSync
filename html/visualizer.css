@@ -12,7 +12,7 @@
     font-size: 14px;
     color: rgba(128, 0, 128, 0.75);
     font-weight: bold;
-    min-width: 2rem;
+    min-width: 1.5rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;

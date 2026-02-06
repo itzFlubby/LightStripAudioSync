@@ -119,8 +119,9 @@ class Visualizer {
             this.magnitudes[1][i] = (view[i + this.bins_size]);
         }
 
-        let simulated = (this.magnitudes[0][0] * 0.7 + this.magnitudes[0][1] * 0.2 + this.magnitudes[0][2] * 0.1) / (255. * 3.);
-
+        let simulated = 
+            (this.magnitudes[0][0] * 0.7 + this.magnitudes[0][1] * 0.2 + this.magnitudes[0][2] * 0.1
+            + this.magnitudes[1][0] * 0.7 + this.magnitudes[1][1] * 0.2 + this.magnitudes[1][2] * 0.1) / (255. * 6.);
         this.background.set_normalized_magnitude(simulated);
 
         this.draw();
@@ -129,7 +130,7 @@ class Visualizer {
     draw() {
         this.context.clearRect(0, 0, this.canvas.offsetWidth, this.canvas.offsetHeight);
         
-        const offset_x = this.canvas.offsetHeight * 0.02; // Offset to avoid blur clipping on edges
+        const offset_x = this.canvas.offsetHeight * 0.03; // Offset to avoid blur clipping on edges
         const canvas_width = this.canvas.offsetWidth - offset_x;
         const canvas_height = this.canvas.offsetHeight;
 
@@ -139,7 +140,7 @@ class Visualizer {
         const channel_bar_max_height = canvas_height / 2;
 
         for (let i = 0; i < this.bins_size; i++) {
-            const left_channel_bar_height = Math.min((this.magnitudes[0][i] / 255.), 0.91) * channel_bar_max_height;
+            const left_channel_bar_height = Math.max((this.magnitudes[0][i] / 255.), 0.01) * channel_bar_max_height;
             const right_channel_bar_height = Math.max((this.magnitudes[1][i] / 255.), 0.01) * channel_bar_max_height;
             
             const left_channel_radius = Math.min(bar_width, left_channel_bar_height) * 0.3;
