@@ -27,7 +27,7 @@ class Dot {
 
     update(magnitude) {
         // Speed increases with audio magnitude
-        const multiplier = 1 + magnitude * 10;
+        const multiplier = 1 + magnitude * 15;
         
         this.x_velocity = this.x_base_velocity * multiplier;
         this.y_velocity = this.y_base_velocity * multiplier;
@@ -68,6 +68,7 @@ class Background {
         this.dots = [];
         this.magnitude = 0;
         this.gradient = null;
+        this.last_frame_timestamp = 0;
         
         this.resize_canvas();
         window.addEventListener("resize", () => this.resize_canvas());
@@ -103,14 +104,21 @@ class Background {
     }
 
     animate() {
-        this.draw();
+        const target_fps = 45;
+        const frame_duration = 1000 / target_fps;
 
-        // Update dots
-        
-        this.context.beginPath();
-        for (let dot of this.dots) {
-            dot.update(this.magnitude);
-            dot.draw(this.context);
+        const now = performance.now();
+        if ((now - this.last_frame_timestamp) >= frame_duration) {
+            this.draw();
+
+            // Update dots
+            this.context.beginPath();
+            for (let dot of this.dots) {
+                dot.update(this.magnitude);
+                dot.draw(this.context);
+            }
+
+            this.last_frame_timestamp = now;
         }
 
         requestAnimationFrame(() => this.animate());
