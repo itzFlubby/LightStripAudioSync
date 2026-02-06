@@ -44,11 +44,11 @@ int main(int argc, char* argv[]) {
             device_name = device_name_or_id;
         }
         if (argc == 3) {
-            std::string max_channels = argv[2];
-            if (std::all_of(max_channels.begin(), max_channels.end(), ::isdigit)) {
-                max_channels = std::stoi(max_channels);
+            std::string max_channels_string = argv[2];
+            if (std::all_of(max_channels_string.begin(), max_channels_string.end(), ::isdigit)) {
+                max_channels = std::stoi(max_channels_string);
             } else {
-                printf("[WARN] Invalid max channels value: %s (expected a number)\n", max_channels.c_str());
+                printf("[WARN] Invalid max channels value: %s (expected a number)\n", max_channels_string.c_str());
             }
         }
     } else if (argc > 3) {
