@@ -18,32 +18,15 @@
 
     <div class="container">
         <div class="header-container" id="header-container-id">
-            <h1>AUDIO VISUALIZER</h1>
+            <h1>AUDIOSYNC VISUALIZER</h1>
         </div>
 
         <div class="visualizer-container" id="visualizer-container-id">
-            <div class="visualizer-channel">
-                <div class="visualizer-channel-label">L</div>
-                <div class="visualizer-channel-bars-container-left" id="visualizer-channel-bars-container-left-id"></div>
+            <div class="visualizer-channel-labels">
+                <span>L</span>
+                <span>R</span>
             </div>
-            <div class="visualizer-channel">
-                <div class="visualizer-channel-label">R</div>
-                <div class="visualizer-channel-bars-container-right" id="visualizer-channel-bars-container-right-id"></div>
-            </div>
-            
-            <div class="vertical-spacer"></div>
-            <div class="visualizer-channel" id="visualizer-channel-simulated-id">
-                
-                <div class="visualizer-channel-label">Sim</div>
-                <div class="visualizer-channel-bars-container-simulated" id="visualizer-channel-bars-container-simulated-id">
-                    <div class="visualizer-channel-bars-container-simulated-left">
-                        <div class="visualizer-channel-bar-simulated-left" id="visualizer-channel-bar-simulated-left-id"></div>
-                    </div>
-                    <div class="visualizer-channel-bars-container-simulated-right">
-                        <div class="visualizer-channel-bar-simulated-right" id="visualizer-channel-bar-simulated-right-id"></div>
-                    </div>
-                </div>
-            </div>
+            <canvas id="bars-canvas-id"></canvas>
         </div>
 
         <div class="ws-status-container", id="ws-status-container-id">

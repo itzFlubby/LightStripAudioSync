@@ -5,76 +5,23 @@
     padding: 1rem;
     margin-bottom: 1rem;
     display: flex;
-    flex-direction: column;
-}
-
-.visualizer-channel {
-    display: flex;
     flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    filter: none;
 }
 
-.visualizer-channel-label {
+.visualizer-channel-labels {
     font-size: 14px;
     color: rgba(128, 0, 128, 0.7);
     font-weight: bold;
     min-width: 2rem;
     display: flex;
-    justify-content: flex-start;
-    text-align: left;
-    align-items: center;
-    flex: 1;
-    text-shadow: 0 0 10px rgba(var(--primary-color), 0.5);
-}
-
-.visualizer-channel#visualizer-channel-simulated-id {
-    height: 2rem;
-}
-
-.visualizer-channel-bars-container-left, .visualizer-channel-bars-container-right, .visualizer-channel-bars-container-simulated,
-.visualizer-channel-bars-container-simulated-left, .visualizer-channel-bars-container-simulated-right {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-end;
+    flex-direction: column;
     justify-content: space-between;
+    text-shadow: 0 0 10px rgba(var(--primary-color), 0.5);
+    flex: 0;
 }
 
-.visualizer-channel-bars-container-right {
-    align-items: flex-start;
-}
-
-.visualizer-channel-bars-container-simulated-left {
-    justify-content: flex-end;
-    align-items: center;
-}
-
-.visualizer-channel-bars-container-simulated-right {
-    align-items: center;
-}
-
-.visualizer-channel-bar-left, .visualizer-channel-bar-right {
-    border-radius: 0.3rem 0.3rem 0rem 0rem;
-    width: 2%;
-    min-height: 0.25rem;
-    height: 0.25rem;
-    box-shadow: 0 0 15px rgba(var(--primary-color), 0.5);
-}
-
-.visualizer-channel-bar-right {
-    border-radius: 0rem 0rem 0.3rem 0.3rem;
-    align-items: flex-start;
-}
-
-.visualizer-channel-bar-simulated-left, .visualizer-channel-bar-simulated-right {
-    border-radius: 0.3rem 0rem 0rem 0.3rem;
-    min-width: 0.25rem;
-    width: 0.25rem;
-    height: 100%;
-    box-shadow: 0 0 15px rgba(var(--primary-color), 0.5);
-}
-
-.visualizer-channel-bar-simulated-right {
-    border-radius: 0rem 0.3rem 0.3rem 0rem;
+.visualizer-channel-labels span {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
 }

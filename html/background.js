@@ -5,7 +5,7 @@ class Dot {
         this.x_base_velocity = (Math.random() - 0.5) * 0.3;
         this.x_velocity = this.x_base_velocity;
         this.y = Math.random() * canvas.height;
-        this.radius = Math.random() * 1.5 + 0.5;
+        this.radius = Math.random() + 0.5;
         this.y_base_velocity = (Math.random() - 0.5) * 0.3;
         this.y_velocity = this.y_base_velocity;
         this.angle = Math.random() * Math.PI * 2;
@@ -27,7 +27,7 @@ class Dot {
 
     update(magnitude) {
         // Speed increases with audio magnitude
-        const multiplier = 1 + magnitude * 3;
+        const multiplier = 1 + magnitude * 10;
         
         this.x_velocity = this.x_base_velocity * multiplier;
         this.y_velocity = this.y_base_velocity * multiplier;
@@ -53,23 +53,18 @@ class Dot {
         this.opacity = Math.random() * 0.3 + 0.2 + magnitude * 0.3;
     }
 
-    draw(ctx) {
-        ctx.fillStyle = this.color + this.opacity + ")";
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Glow effect
-        ctx.strokeStyle = this.color + (this.opacity * 0.6) + ")";
-        ctx.lineWidth = 0.5;
-        ctx.stroke();
+    draw(context) {
+        context.beginPath();
+        context.fillStyle = this.color + this.opacity + ")";
+        context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        context.fill();
     }
 }
 
 class Background {
     constructor() {
         this.canvas = document.getElementById("background-canvas-id");
-        this.ctx = this.canvas.getContext("2d");
+        this.context = this.canvas.getContext("2d");
         this.dots = [];
         this.magnitude = 0;
         this.gradient = null;
@@ -82,16 +77,16 @@ class Background {
     }
 
     resize_canvas() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
-        this.gradient = this.ctx.createLinearGradient(0, 0, this.canvas.width, this.canvas.height);
+        this.canvas.width = window.innerWidth / 2; // Scale down resolution to reduce GPU load
+        this.canvas.height = window.innerHeight / 2;
+        this.gradient = this.context.createLinearGradient(0, 0, this.canvas.width, this.canvas.height);
         this.gradient.addColorStop(0.0, "#02091a");
         this.gradient.addColorStop(0.5, "#071322");
         this.gradient.addColorStop(1.0, "#061d26");
     }
 
     initialize_dots() {
-        const dots_size = Math.floor((this.canvas.width * this.canvas.height) / 30000);
+        const dots_size = Math.floor((this.canvas.width * this.canvas.height) / 20000);
         this.dots = [];
         for (let i = 0; i < dots_size; i++) {
             this.dots.push(new Dot(this.canvas));
@@ -103,17 +98,19 @@ class Background {
     }
 
     draw() {
-        this.ctx.fillStyle = this.gradient;
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.context.fillStyle = this.gradient;
+        this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
     animate() {
         this.draw();
 
         // Update dots
+        
+        this.context.beginPath();
         for (let dot of this.dots) {
             dot.update(this.magnitude);
-            dot.draw(this.ctx);
+            dot.draw(this.context);
         }
 
         requestAnimationFrame(() => this.animate());
