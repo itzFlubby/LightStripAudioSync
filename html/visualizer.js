@@ -127,7 +127,7 @@ class Visualizer {
     }
 
     draw() {
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.context.clearRect(0, 0, this.canvas.offsetWidth, this.canvas.offsetHeight);
         
         const offset_x = this.canvas.offsetHeight * 0.02; // Offset to avoid blur clipping on edges
         const canvas_width = this.canvas.offsetWidth - offset_x;
