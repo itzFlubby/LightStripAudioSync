@@ -70,6 +70,7 @@ class Visualizer {
         this.background = background;
         this.context = this.canvas.getContext("2d");
         this.device_pixel_ratio = window.devicePixelRatio || 1;
+        this.primaryColor = getComputedStyle(document.documentElement).getPropertyValue("--primary-color").trim();
 
         this.resize_canvas();
         window.addEventListener("resize", () => this.resize_canvas());
@@ -82,9 +83,9 @@ class Visualizer {
         this.canvas.height = this.canvas.offsetHeight * this.device_pixel_ratio;
 
         this.context.setTransform(this.device_pixel_ratio, 0, 0, this.device_pixel_ratio, 0, 0);
-        this.context.strokeStyle = "rgba(29, 145, 192, 0.75)"; // Opacity affects shadowColor opacity
+        this.context.strokeStyle = `rgb(${this.primaryColor})`; // Opacity affects shadowColor opacity
         this.context.lineWidth = 0.5;
-        this.context.shadowColor = "rgba(29, 145, 192, 0.75)";
+        this.context.shadowColor = `rgba(${this.primaryColor})`;
         this.context.shadowBlur = 10;
 
         this.draw();

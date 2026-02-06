@@ -42,6 +42,7 @@
                     id="ws-status-input-url-id" 
                     placeholder="ws://localhost:3335" 
                     value="ws://localhost:3335"
+                    onkeypress="if (event.key === 'Enter') ws_toggle_connection()"
                 >
             </div>
             <div class="ws-status-element" id="ws-status-button-id">
