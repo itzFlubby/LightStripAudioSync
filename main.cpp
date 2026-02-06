@@ -10,6 +10,16 @@
 #pragma comment(lib, "Ws2_32.lib") // Link with ws2_32.lib
 #endif
 
+#if defined(_WIN32)
+#include <io.h>
+#define ISATTY _isatty
+#define FILENO _fileno
+#else
+#include <unistd.h>
+#define ISATTY isatty
+#define FILENO fileno
+#endif
+
 DataSender* data_sender     = nullptr;
 AudioCapture* audio_capture = nullptr;
 Visualizer visualizer;
@@ -56,6 +66,13 @@ int main(int argc, char* argv[]) {
     audio_capture = new AudioCapture(data_sender, device_name, device_id, max_channels);
     if (!audio_capture || audio_capture->initialize() != 0) { return cleanup_and_exit(1); }
 
+    if (!ISATTY(FILENO(stdin))) {
+        printf("[INFO] Environment doesn't have a terminal, going to sleep...\n");
+        while (true) {
+            std::this_thread::sleep_for(std::chrono::seconds(60));
+        }
+    }
+
     bool visualizer_active = false;
     while (true) {
         if (visualizer_active) {
@@ -75,12 +92,7 @@ int main(int argc, char* argv[]) {
         } else if (input == "exit" || input == "quit" || input == "q") {
             break;
         } else {
-            if (!input.empty()) {
-                printf("Unknown command: \"%s\"\n", input.c_str());
-            } else {
-                // Wait a bit to reduce CPU load (terminal probably doesn't support input)
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            }
+            if (!input.empty()) { printf("Unknown command: \"%s\"\n", input.c_str()); }
         }
     }
 
