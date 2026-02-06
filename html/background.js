@@ -104,7 +104,7 @@ class Background {
     }
 
     animate() {
-        const target_fps = 45;
+        const target_fps = 40;
         const frame_duration = 1000 / target_fps;
 
         const now = performance.now();

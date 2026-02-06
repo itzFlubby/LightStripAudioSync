@@ -34,6 +34,7 @@ class DataHandler {
         this.status_dot.classList.add("connected");
         this.status_text.textContent = "Connected";
         this.button.textContent = "Disconnect";
+        this.button.style.opacity = 0.5;
     }
 
     on_close(status = "Disconnected") {
@@ -42,6 +43,7 @@ class DataHandler {
         this.status_dot.classList.remove("connected");
         this.status_text.textContent = status;
         this.button.textContent = "Connect";
+        this.button.style.opacity = 1.0;
     }
 
     on_data(data) {
