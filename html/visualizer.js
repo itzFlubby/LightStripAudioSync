@@ -71,7 +71,6 @@ class Visualizer {
         this.canvas = canvas;
         this.background = background;
         this.context = this.canvas.getContext("2d");
-        this.device_pixel_ratio = window.devicePixelRatio || 1;
         this.primaryColor = getComputedStyle(document.documentElement).getPropertyValue("--primary-color").trim();
 
         this.resize_canvas();
@@ -81,14 +80,13 @@ class Visualizer {
     }
 
     resize_canvas() {
-        this.canvas.width = this.canvas.offsetWidth * this.device_pixel_ratio;
-        this.canvas.height = this.canvas.offsetHeight * this.device_pixel_ratio;
+        this.canvas.width = this.canvas.parentElement.clientWidth;
+        this.canvas.height = this.canvas.parentElement.clientHeight;
 
-        this.context.setTransform(this.device_pixel_ratio, 0, 0, this.device_pixel_ratio, 0, 0);
         this.context.strokeStyle = `rgb(${this.primaryColor})`; // Opacity affects shadowColor opacity
-        this.context.lineWidth = 1.5 / this.device_pixel_ratio;
+        this.context.lineWidth = 1;
         this.context.shadowColor = `rgba(${this.primaryColor})`;
-        this.context.shadowBlur = 12.5 / this.device_pixel_ratio;
+        this.context.shadowBlur = 10;
 
         this.draw();
     }
@@ -128,11 +126,11 @@ class Visualizer {
     }
 
     draw() {
-        this.context.clearRect(0, 0, this.canvas.offsetWidth, this.canvas.offsetHeight);
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
-        const offset_x = this.canvas.offsetHeight * 0.03; // Offset to avoid blur clipping on edges
-        const canvas_width = this.canvas.offsetWidth - offset_x;
-        const canvas_height = this.canvas.offsetHeight;
+        const offset_x = this.canvas.height * 0.03; // Offset to avoid blur clipping on edges
+        const canvas_width = this.canvas.width - offset_x;
+        const canvas_height = this.canvas.height;
 
         const bar_width = canvas_width * 0.02;
         const bar_spacing = (canvas_width - (this.bins_size * bar_width)) / (this.bins_size - 1);

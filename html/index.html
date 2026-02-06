@@ -1,64 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Visualizer</title>
-    <link rel="stylesheet" href="index.css">
-    <link rel="stylesheet" href="visualizer.css">
-    <script src="background.js"></script>
-    <script src="visualizer.js"></script>
-</head>
-<body>
-    <canvas class="background-canvas" id="background-canvas-id"></canvas>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Audio Visualizer</title>
+        <link rel="stylesheet" href="index.css">
+        <link rel="stylesheet" href="visualizer.css">
+        <script src="background.js"></script>
+        <script src="visualizer.js"></script>
+    </head>
+    <body>
+        <canvas class="background-canvas" id="background-canvas-id"></canvas>
 
-    <div class="loader-container"  id="loader-container-id">
-        <div class="loader"></div>
-    </div>
-
-    <div class="container">
-        <div class="header-container" id="header-container-id">
-            <h1>AUDIOSYNC VISUALIZER</h1>
+        <div class="loader-container"  id="loader-container-id">
+            <div class="loader"></div>
         </div>
 
-        <div class="visualizer-container" id="visualizer-container-id">
-            <div class="visualizer-channel-labels" style="text-align: left;">
-                <span>L</span>
-                <span>R</span>
+        <div class="container">
+            <div class="header-container" id="header-container-id">
+                <h1>AUDIOSYNC VISUALIZER</h1>
             </div>
-            <canvas id="bars-canvas-id"></canvas>
-            <div class="visualizer-channel-labels" style="text-align: right;">
-                <span>L</span>
-                <span>R</span>
-            </div>
-        </div>
 
-        <div class="ws-status-container", id="ws-status-container-id">
-            <div class="ws-status-element" id="ws-status-dot-id">
-                <div class="ws-status-dot" id="ws-status-dot-div-id"></div>
+            <div class="visualizer-container" id="visualizer-container-id">
+                <div class="visualizer-channel-labels" style="text-align: left;">
+                    <span>L</span>
+                    <span>R</span>
+                </div>
+                <div class="visualizer-canvas">
+                    <canvas id="bars-canvas-id"></canvas>
+                </div>
+                <div class="visualizer-channel-labels" style="text-align: right;">
+                    <span>L</span>
+                    <span>R</span>
+                </div>
             </div>
-            <div class="ws-status-element" id="ws-status-text-id">
-                Disconnected
-            </div>
-            <div class="ws-status-element" id="ws-status-input-id">
-                <input 
-                    type="text" 
-                    id="ws-status-input-url-id" 
-                    placeholder="ws://localhost:3335" 
-                    value="ws://localhost:3335"
-                    onkeypress="if (event.key === 'Enter') ws_toggle_connection()"
-                >
-            </div>
-            <div class="ws-status-element" id="ws-status-button-id">
-                <button id="ws-status-button-connect-id" onclick="ws_toggle_connection()">Connect</button>
-            </div>
-        </div>
 
-        <div class="footer-container" id="footer-container-id">
-            <div class="footer-element" id="footer-element-frames-id"><span>0</span> total frames</div>
-            <div class="footer-element" id="footer-element-fps-id"><span>0.0</span> FPS</div>
-            <div class="footer-element" id="footer-element-seconds-id"><span>0.000</span> seconds</div>
+            <div class="ws-status-container", id="ws-status-container-id">
+                <div class="ws-status-element" id="ws-status-dot-id">
+                    <div class="ws-status-dot" id="ws-status-dot-div-id"></div>
+                </div>
+                <div class="ws-status-element" id="ws-status-text-id">
+                    Disconnected
+                </div>
+                <div class="ws-status-element" id="ws-status-input-id">
+                    <input 
+                        type="text" 
+                        id="ws-status-input-url-id" 
+                        placeholder="ws://localhost:3335" 
+                        value="ws://localhost:3335"
+                        onkeypress="if (event.key === 'Enter') ws_toggle_connection()"
+                    >
+                </div>
+                <div class="ws-status-element" id="ws-status-button-id">
+                    <button id="ws-status-button-connect-id" onclick="ws_toggle_connection()">Connect</button>
+                </div>
+            </div>
+
+            <div class="footer-container" id="footer-container-id">
+                <div class="footer-element" id="footer-element-frames-id"><span>0</span> total frames</div>
+                <div class="footer-element" id="footer-element-fps-id"><span>0.0</span> FPS</div>
+                <div class="footer-element" id="footer-element-seconds-id"><span>0.000</span> seconds</div>
+            </div>
         </div>
-    </div>
-</body>
+        <div class="disclaimer">
+            https://github.com/itzFlubby/LightStripAudioSync
+        </div>
+    </body>
 </html>
