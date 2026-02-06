@@ -86,9 +86,9 @@ class Visualizer {
 
         this.context.setTransform(this.device_pixel_ratio, 0, 0, this.device_pixel_ratio, 0, 0);
         this.context.strokeStyle = `rgb(${this.primaryColor})`; // Opacity affects shadowColor opacity
-        this.context.lineWidth = 0.5;
+        this.context.lineWidth = 1.5 / this.device_pixel_ratio;
         this.context.shadowColor = `rgba(${this.primaryColor})`;
-        this.context.shadowBlur = 10;
+        this.context.shadowBlur = 12.5 / this.device_pixel_ratio;
 
         this.draw();
     }
