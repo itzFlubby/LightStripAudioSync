@@ -32,6 +32,10 @@ int cleanup_and_exit(int code) {
 }
 
 int main(int argc, char* argv[]) {
+    // Disable buffering
+    setvbuf(stdout, NULL, _IONBF, 0);
+    setvbuf(stderr, NULL, _IONBF, 0);
+
     std::string device_name = "";
     int device_id           = -1;
     int max_channels        = -1;
