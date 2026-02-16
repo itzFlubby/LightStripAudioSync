@@ -1,11 +1,12 @@
 class Dot {
-    constructor(canvas) {
+    constructor(canvas, settings) {
         this.canvas = canvas;
+        this.settings = settings;
         this.x = Math.random() * canvas.width;
         this.x_base_velocity = (Math.random() - 0.5) * 0.3;
         this.x_velocity = this.x_base_velocity;
         this.y = Math.random() * canvas.height;
-        this.radius = Math.random() + 0.5;
+        this.radius = (Math.random() + 0.5) * this.settings.get("Background", "Dot size multiplier");
         this.y_base_velocity = (Math.random() - 0.5) * 0.3;
         this.y_velocity = this.y_base_velocity;
         this.angle = Math.random() * Math.PI * 2;
@@ -27,10 +28,10 @@ class Dot {
 
     update(magnitude) {
         // Speed increases with audio magnitude
-        const multiplier = 1 + magnitude * 15;
+        const velocity_multiplier = 1 + magnitude * this.settings.get("Background", "Velocity multiplier");
         
-        this.x_velocity = this.x_base_velocity * multiplier;
-        this.y_velocity = this.y_base_velocity * multiplier;
+        this.x_velocity = this.x_base_velocity * velocity_multiplier;
+        this.y_velocity = this.y_base_velocity * velocity_multiplier;
         
         this.x += this.x_velocity;
         this.y += this.y_velocity;
@@ -50,7 +51,7 @@ class Dot {
         }
 
         // Pulse opacity based on audio
-        this.opacity = Math.random() * 0.3 + 0.2 + magnitude * 0.3;
+        this.opacity = Math.random() * 0.1 + 0.4 + magnitude * 0.5;
     }
 
     draw(context) {
@@ -62,8 +63,9 @@ class Dot {
 }
 
 class Background {
-    constructor() {
-        this.canvas = document.getElementById("background-canvas-id");
+    constructor(canvas, settings) {
+        this.canvas = canvas;
+        this.settings = settings;
         this.context = this.canvas.getContext("2d");
         this.dots = [];
         this.magnitude = 0;
@@ -87,10 +89,10 @@ class Background {
     }
 
     initialize_dots() {
-        const dots_size = Math.floor((this.canvas.width * this.canvas.height) / 15000);
+        const dots_size = this.settings.get("Background", "Dot count (auto)") ? Math.floor((this.canvas.width * this.canvas.height) / 15000) : this.settings.get("Background", "Dot count");
         this.dots = [];
         for (let i = 0; i < dots_size; i++) {
-            this.dots.push(new Dot(this.canvas));
+            this.dots.push(new Dot(this.canvas, this.settings));
         }
     }
 

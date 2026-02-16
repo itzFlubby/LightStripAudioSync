@@ -1,74 +1,7 @@
-let data_handler = null;
-let websocket = null;
-
-class DataHandler {
-    constructor(visualizer) {
-        this.visualizer = visualizer;
-        this.fps = 0;
-        this.total_frames = 0;
-        this.last_frame_timestamp = null;
-        this.first_frame_timestamp = null;
-        this.footer_update_interval = null;
-
-        // Cache to reduce DOM lookups
-        this.status_dot = document.getElementById("ws-status-dot-div-id");
-        this.status_text = document.getElementById("ws-status-text-id");
-        this.button = document.getElementById("ws-status-button-connect-id");
-        this.loader = document.getElementById("loader-container-id");
-        this.footer_elements = [
-            document.getElementById("footer-element-frames-id").firstChild,
-            document.getElementById("footer-element-fps-id").firstChild,
-            document.getElementById("footer-element-seconds-id").firstChild
-        ];
-    }
-
-    on_connecting() {
-        this.loader.style.display = "flex";
-    }
-
-    on_connect() {
-        this.first_frame_timestamp = Date.now();
-        this.last_frame_timestamp = this.first_frame_timestamp;
-        this.footer_update_interval = window.setInterval(this.update_footer.bind(this), 1000);
-        this.loader.style.display = "none";
-        this.status_dot.classList.add("connected");
-        this.status_text.textContent = "Connected";
-        this.button.textContent = "Disconnect";
-        this.button.style.opacity = 0.5;
-    }
-
-    on_close(status = "Disconnected") {
-        clearInterval(this.footer_update_interval);
-        this.loader.style.display = "none";
-        this.status_dot.classList.remove("connected");
-        this.status_text.textContent = status;
-        this.button.textContent = "Connect";
-        this.button.style.opacity = 1.0;
-    }
-
-    on_data(data) {
-        this.visualizer.parse_data(data);
-        this.fps++;
-        this.total_frames++;
-    }
-
-    update_footer() {
-        const now = Date.now();
-        const elapsed = now - this.last_frame_timestamp;
-        if (elapsed >= 1000) {
-            const fps = (this.fps / (elapsed / 1000)).toFixed(1);
-            this.footer_elements[0].textContent = this.total_frames;
-            this.footer_elements[1].textContent = fps;
-            this.footer_elements[2].textContent = (now - this.first_frame_timestamp) / 1000;
-            this.fps = 0;
-            this.last_frame_timestamp = now;
-        }
-    }
-}
-
 class Visualizer {
-    constructor(canvas, background) {
+    constructor(canvas, settings, background) {
         this.canvas = canvas;
+        this.settings = settings;
         this.background = background;
         this.context = this.canvas.getContext("2d");
         this.primaryColor = getComputedStyle(document.documentElement).getPropertyValue("--primary-color").trim();
@@ -84,9 +17,9 @@ class Visualizer {
         this.canvas.height = this.canvas.parentElement.clientHeight;
 
         this.context.strokeStyle = `rgb(${this.primaryColor})`; // Opacity affects shadowColor opacity
-        this.context.lineWidth = 1;
+        this.context.lineWidth = this.settings.get("Visualizer", "Bar line width");
         this.context.shadowColor = `rgba(${this.primaryColor})`;
-        this.context.shadowBlur = 10;
+        this.context.shadowBlur = this.settings.get("Visualizer", "Bar shadow blur");
 
         this.draw();
     }
@@ -132,14 +65,16 @@ class Visualizer {
         const canvas_width = this.canvas.width - offset_x;
         const canvas_height = this.canvas.height;
 
-        const bar_width = canvas_width * 0.02;
+        const bar_width = canvas_width * this.settings.get("Visualizer", "Bar width");;
         const bar_spacing = (canvas_width - (this.bins_size * bar_width)) / (this.bins_size - 1);
 
         const channel_bar_max_height = canvas_height / 2;
 
+        const min_bar_height = this.settings.get("Visualizer", "Min. bar height");
+
         for (let i = 0; i < this.bins_size; i++) {
-            const left_channel_bar_height = Math.max((this.magnitudes[0][i] / 255.), 0.01) * channel_bar_max_height;
-            const right_channel_bar_height = Math.max((this.magnitudes[1][i] / 255.), 0.01) * channel_bar_max_height;
+            const left_channel_bar_height = Math.max((this.magnitudes[0][i] / 255.), min_bar_height) * channel_bar_max_height;
+            const right_channel_bar_height = Math.max((this.magnitudes[1][i] / 255.), min_bar_height) * channel_bar_max_height;
             
             const left_channel_radius = Math.min(bar_width, left_channel_bar_height) * 0.3;
             const right_channel_radius = Math.min(bar_width, right_channel_bar_height) * 0.3;
@@ -182,46 +117,3 @@ class Visualizer {
         }
     }
 }
-
-function ws_connect() {
-    websocket = new WebSocket(document.getElementById("ws-status-input-url-id").value);
-    websocket.binaryType = "arraybuffer";
-    data_handler.on_connecting();
-    
-    websocket.onopen = () => data_handler.on_connect();
-    websocket.onmessage = (event) => data_handler.on_data(event.data);
-    websocket.onerror = () => data_handler.on_close("Error");
-    websocket.onclose = () => data_handler.on_close();
-}
-
-function ws_disconnect() {
-    if (websocket) {
-        websocket.close();
-        websocket = null;
-    }
-}
-
-function ws_toggle_connection() {
-    if (websocket && (websocket.readyState == WebSocket.OPEN)) {
-        ws_disconnect();
-    } else {
-        ws_connect();
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    const background = new Background();
-    const visualizer = new Visualizer(document.getElementById("bars-canvas-id"), background);
-    data_handler = new DataHandler(visualizer);
-
-    // Set URL from search
-    const captured = /url=([^&]+)/.exec(location.search);
-    if (captured) {
-        document.getElementById("ws-status-input-url-id").value = `${captured[1]}`;
-    }
-
-    // Automatically connect to websocket
-    if (location.search.includes("auto")) {
-        ws_connect();
-    }
-});

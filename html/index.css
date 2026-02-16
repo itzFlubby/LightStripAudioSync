@@ -92,7 +92,7 @@ body {
     flex: 5;
 }
 
-#visualizer-container-id {
+#content-container-id {
     flex: 85;
 }
 
@@ -119,7 +119,17 @@ body {
     font-size: 2rem;
 }
 
-.ws-status-container {
+.content-container {
+    width: 100%;
+    min-height: 0;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(var(--primary-color), 0.35);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.control-container {
     height: 2rem;
     width: 100%;
     display: flex;
@@ -129,42 +139,42 @@ body {
     margin-bottom: 1rem;
 }
 
-.ws-status-element {
+.control-element {
     height: 100%;
     display: flex;
     align-items: center;
     flex: 1;
 }
 
-.ws-status-element#ws-status-dot-id {
+.control-element#control-ws-dot-id {
     min-width: 1rem;
     flex: 3;
 }
 
-.ws-status-element#ws-status-text-id {
+.control-element#control-ws-text-id {
     min-width: 7.5rem;
     flex: 12;
 }
 
-.ws-status-element#ws-status-input-id {
+.control-element#control-ws-input-id {
     min-width: 0;
     flex: 70;
 }
 
-.ws-status-element#ws-status-button-id {
+.control-element#control-ws-button-id, .control-element#control-settings-button-id {
     margin-left: 1rem;
     min-width: 7.5rem;
     flex: 15;
 }
 
-.ws-status-dot {
+.control-ws-dot {
     width: 0.5rem;
     height: 0.5rem;
     border-radius: 50%;
     background: rgba(255, 50, 50, 0.4);
 }
 
-.ws-status-dot.connected {
+.control-ws-dot.connected {
     background: rgba(0, 255, 50, 0.4);
 }
 
