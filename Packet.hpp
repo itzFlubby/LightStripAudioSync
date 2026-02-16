@@ -17,6 +17,7 @@ class Packet {
             discover_device = 0x00,
             register_device,
             data,
+            exit,
             undefined
         };
 

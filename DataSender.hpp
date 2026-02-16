@@ -43,6 +43,7 @@ class DataSender {
                 std::atomic<bool> udp_discover_running = false;
                 std::atomic<bool> tcp_send_running     = false;
                 std::atomic<bool> tcp_send_queued      = false;
+                std::atomic<bool> ws_running           = false;
         } state;
 
         struct {
@@ -51,6 +52,7 @@ class DataSender {
                 std::unique_ptr<std::thread> udp_send     = nullptr;
                 std::unique_ptr<std::thread> udp_discover = nullptr;
                 std::unique_ptr<std::thread> tcp_send     = nullptr;
+                std::unique_ptr<std::thread> ws_loop      = nullptr;
         } thread_instance;
 
         // UDP
@@ -70,11 +72,14 @@ class DataSender {
         int tcp_initialize(void);
         bool tcp_send(const SOCKET client, const Packet& packet);
 
+        // WS
+        int ws_initialize(void);
+
     public:
         DataSender(void) = default;
         ~DataSender(void);
 
-        int initialize(void);
+        int initialize(bool init_ws);
 
         int udp_initialize_device(const char* destination_ip);
         static void udp_listen_thread(DataSender* data_sender);
@@ -84,4 +89,6 @@ class DataSender {
 
         static void tcp_send_thread(DataSender* data_sender);
         void tcp_enqueue(const Packet& packet);
+
+        static void ws_thread(DataSender* data_sender);
 };

@@ -28,13 +28,17 @@ async def ws_pipe_tcp():
 
             while True:
                 data = await tcp_reader.read(BUFFER_SIZE)
-                if not data:
-                    pass
+
+                if data[1] == 0x03:
+                    print("[XXXX] Exiting...")
+                    return
+
+                payload = data[3 : (len(data) - 1)]
 
                 dead_ws_clients = set()
                 for ws_client in ws_clients:
                     try:
-                        await ws_client.send(data[3 : (len(data) - 1)])
+                        await ws_client.send(payload)
                     except:
                         dead_ws_clients.add(ws_client)
 

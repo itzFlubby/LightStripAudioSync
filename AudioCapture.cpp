@@ -1,4 +1,5 @@
 #include "AudioCapture.hpp"
+#include "logger.hpp"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -17,21 +18,21 @@ AudioCapture::AudioCapture(DataSender* data_sender, std::string device_name, int
 
     std::vector<RtAudio::Api> compiled_apis;
     RtAudio::getCompiledApi(compiled_apis);
-    printf("[INFO] Compiled RtAudio APIs (* is in use):\n");
+    log("[INFO] Compiled RtAudio APIs (* is in use):");
     for (RtAudio::Api api : compiled_apis) {
-        printf("  - %s %c\n", RtAudio::getApiName(api).c_str(), (api == this->rtaudio->getCurrentApi()) ? '*' : ' ');
+        log("  - %s %c", RtAudio::getApiName(api).c_str(), (api == this->rtaudio->getCurrentApi()) ? '*' : ' ');
     }
 
     if (this->rtaudio->getDeviceCount() < 1) {
-        printf("[CRIT] No audio devices found!\n");
+        log("[CRIT] No audio devices found!");
         return;
     }
 
     std::vector<unsigned> device_ids = this->rtaudio->getDeviceIds();
-    printf("[INFO] Available audio devices:\n");
+    log("[INFO] Available audio devices:");
     for (unsigned id : device_ids) {
         RtAudio::DeviceInfo info = this->rtaudio->getDeviceInfo(id);
-        printf("  - \"%s\" (%d, %c)\n", info.name.c_str(), info.ID, (info.inputChannels > 0) ? 'I' : 'O');
+        log("  - \"%s\" (%d, %c)", info.name.c_str(), info.ID, (info.inputChannels > 0) ? 'I' : 'O');
 
         // Use device id from name if specified
         if (!device_name.empty() && (info.name == device_name)) { device_id = info.ID; }
@@ -39,7 +40,7 @@ AudioCapture::AudioCapture(DataSender* data_sender, std::string device_name, int
 
     RtAudio::DeviceInfo device_info = this->rtaudio->getDeviceInfo(device_id);
     if (device_info.ID != static_cast<unsigned>(device_id)) {
-        printf("[CRIT] Specified audio device not found!\n");
+        log("[CRIT] Specified audio device not found!");
         return;
     }
 
@@ -51,17 +52,15 @@ AudioCapture::AudioCapture(DataSender* data_sender, std::string device_name, int
     this->output_buffer_size   = this->input_buffer_size / 2 + 1;
 
     if (this->parameters.nChannels == 0) {
-        printf("[CRIT] Selected audio device has no input or output channels!\n");
+        log("[CRIT] Selected audio device has no input or output channels!");
         return;
     }
 
-    printf(
-        "[++++] Registered audio device:\n\tId: %d\n\tChannels: %d\n\tSample rate: %d\n\tFormats: %#x\n",
+    log("[++++] Registered audio device:\n\tId: %d\n\tChannels: %d\n\tSample rate: %d\n\tFormats: %#x",
         this->parameters.deviceId,
         this->parameters.nChannels,
         this->sample_rate,
-        device_info.nativeFormats
-    );
+        device_info.nativeFormats);
 
     // Reserve memory for magnitude data (one byte magnitude + one byte log magnitude per channel)
     this->magnitude_data.resize(this->parameters.nChannels * 2);
@@ -177,17 +176,17 @@ unsigned AudioCapture::open_stream(void) {
              NULL, &(this->parameters), RTAUDIO_FLOAT64, this->sample_rate, &(this->input_buffer_size), AudioCapture::record, reinterpret_cast<void*>(this)
          ))
         != RTAUDIO_NO_ERROR) {
-        printf("[CRIT] Failed to open stream with error code %d!\n", result);
+        log("[CRIT] Failed to open stream with error code %d!", result);
         return result;
     }
 
     if ((this->fftw = fftw_plan_dft_r2c_1d(this->input_buffer_size, this->fftw_in.data(), this->fftw_out, FFTW_MEASURE)) == NULL) {
-        printf("[CRIT] Failed to create FFTW plan!\n");
+        log("[CRIT] Failed to create FFTW plan!");
         return 1;
     }
 
     if ((result = this->rtaudio->startStream()) != RTAUDIO_NO_ERROR) {
-        printf("[CRIT] Failed to start stream with error code %d!\n", result);
+        log("[CRIT] Failed to start stream with error code %d!", result);
         return result;
     }
 
@@ -198,7 +197,7 @@ unsigned AudioCapture::close_stream(void) {
     RtAudioErrorType result = RTAUDIO_NO_ERROR;
     if (this->rtaudio->isStreamRunning()) {
         if ((result = this->rtaudio->stopStream()) != RTAUDIO_NO_ERROR) {
-            printf("[CRIT] Failed to stop stream with error code %d!\n", result);
+            log("[CRIT] Failed to stop stream with error code %d!", result);
             return result;
         }
     }

@@ -12,6 +12,7 @@ endif()
 
 set(SOURCES
     main.cpp
+    logger.cpp
     AudioCapture.cpp
     DataSender.cpp
     $<$<PLATFORM_ID:Windows>:RtAudio/RtAudio.cpp>

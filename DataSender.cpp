@@ -1,4 +1,5 @@
 #include "DataSender.hpp"
+#include "logger.hpp"
 
 #include <algorithm>
 #include <iomanip>
@@ -11,10 +12,14 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define ERRNO         WSAGetLastError()
 #define SOCKOPT_DTYPE char
+#define OPEN_PIPE     _popen
+#define CLOSE_PIPE    _pclose
 #else
 #include <errno.h>
 #define ERRNO         errno
 #define SOCKOPT_DTYPE int
+#define OPEN_PIPE     popen
+#define CLOSE_PIPE    pclose
 #endif
 
 DataSender::~DataSender(void) {
@@ -35,6 +40,13 @@ DataSender::~DataSender(void) {
         this->thread_instance.udp_discover->join();
     }
 
+    // Must happen before tcp_send thread exit to get exit message into python websocket
+    if (this->thread_instance.ws_loop) {
+        this->state.ws_running = false;
+        this->tcp_enqueue(Packet(Packet::destination_t::device, Packet::type_t::exit, nullptr, 0));
+        this->thread_instance.ws_loop->join();
+    }
+
     if (this->thread_instance.tcp_send) {
         this->state.tcp_send_running = false;
         this->thread_instance.tcp_send->join();
@@ -45,7 +57,7 @@ DataSender::~DataSender(void) {
 #else
     if ((result = close(this->udp_socket)) == SOCKET_ERROR) {
 #endif
-        printf("[CRIT] Closing the socket failed with error code %d!\n", ERRNO);
+        log("[CRIT] Closing the socket failed with error code %d!", ERRNO);
 
 #if defined(_WIN32)
         WSACleanup();
@@ -53,25 +65,32 @@ DataSender::~DataSender(void) {
     }
 }
 
-int DataSender::initialize(void) {
+int DataSender::initialize(bool init_ws) {
     int result = 0;
 
 #if defined(_WIN32)
     // Initialize WinSock
     if ((result = WSAStartup(MAKEWORD(2, 2), &this->wsa_data)) != NO_ERROR) {
-        printf("[CRIT] WSAStartup failed with error code %d!\n", result);
+        log("[CRIT] WSAStartup failed with error code %d!", result);
         return result;
     }
 #endif
 
     if (this->udp_initialize() != 0) {
-        printf("[CRIT] UDP initialization failed!\n");
+        log("[CRIT] UDP initialization failed!");
         return 1;
     }
 
     if (this->tcp_initialize() != 0) {
-        printf("[CRIT] TCP initialization failed!\n");
+        log("[CRIT] TCP initialization failed!");
         return 1;
+    }
+
+    if (init_ws) {
+        if (this->ws_initialize() != 0) {
+            log("[CRIT] WebSocket initialization failed!");
+            return 1;
+        }
     }
 
     return result;
@@ -82,14 +101,14 @@ int DataSender::udp_initialize(void) {
 
     // Create the socket
     if ((this->udp_socket = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET) {
-        printf("[CRIT] Opening the UDP socket failed with error code %ld!\n", ERRNO);
+        log("[CRIT] Opening the UDP socket failed with error code %ld!", ERRNO);
         return 1;
     }
 
     // Allow broadcasts by the socket
     bool broadcast = true;
     if (setsockopt(this->udp_socket, SOL_SOCKET, SO_BROADCAST, reinterpret_cast<SOCKOPT_DTYPE*>(&broadcast), sizeof(SOCKOPT_DTYPE)) == SOCKET_ERROR) {
-        printf("[CRIT] Enabling UDP broadcast failed with error code %ld!\n", ERRNO);
+        log("[CRIT] Enabling UDP broadcast failed with error code %ld!", ERRNO);
         return 1;
     }
 
@@ -99,13 +118,13 @@ int DataSender::udp_initialize(void) {
     local_addr.sin_port        = htons(UDP_PORT);
     local_addr.sin_addr.s_addr = INADDR_ANY;
     if (bind(this->udp_socket, reinterpret_cast<struct sockaddr*>(&local_addr), sizeof(local_addr)) == SOCKET_ERROR) {
-        printf("[CRIT] Binding the UDP socket failed with error code %d!\n", ERRNO);
+        log("[CRIT] Binding the UDP socket failed with error code %d!", ERRNO);
         return 1;
     }
 
     // Initialize broadcast address
     if (this->udp_initialize_device("255.255.255.255") != 0) {
-        printf("[CRIT] Starting UDP broadcast failed!\n");
+        log("[CRIT] Starting UDP broadcast failed!");
         return 1;
     }
 
@@ -138,7 +157,7 @@ int DataSender::udp_initialize_device(const char* destination_ip) {
         this->udp_destinations.push_back(destination);
         this->udp_zero_packet_count = 0; // Force resend when new client connects
     } else {
-        printf("[CRIT] Invalid destination IP address %s!\n", destination_ip);
+        log("[CRIT] Invalid destination IP address %s!", destination_ip);
         return 1;
     }
     return 0;
@@ -153,7 +172,7 @@ void DataSender::udp_listen_thread(DataSender* data_sender) {
         // Wait for data
         int bytes_received = recvfrom(data_sender->udp_socket, buffer, sizeof(buffer) - 1, 0, reinterpret_cast<struct sockaddr*>(&sender_addr), &sender_addr_size);
         if (bytes_received == SOCKET_ERROR) {
-            printf("[CRIT] Receiving UDP data failed with error code %d!\n", ERRNO);
+            log("[CRIT] Receiving UDP data failed with error code %d!", ERRNO);
             continue;
         }
 
@@ -174,7 +193,7 @@ void DataSender::udp_listen_thread(DataSender* data_sender) {
                     inet_ntop(AF_INET, &sender_addr.sin_addr, sender_ip, INET_ADDRSTRLEN);
 #endif
                     data_sender->udp_initialize_device(sender_ip);
-                    printf("[++++] Registered sync device:\n\tIP: %s, Port: %d\n", sender_ip, sender_addr.sin_port);
+                    log("[++++] Registered sync device:\n\tIP: %s, Port: %d", sender_ip, sender_addr.sin_port);
                 }
             }
         }
@@ -233,7 +252,7 @@ bool DataSender::udp_send(const Packet& packet) {
 
 bool DataSender::udp_send_raw(const sockaddr* address, const std::vector<uint8_t>& packet) {
     if (sendto(this->udp_socket, reinterpret_cast<const char*>(packet.data()), packet.size(), 0, address, sizeof(*address)) == SOCKET_ERROR) {
-        printf("[CRIT] Sending to UDP device failed with error code %d!\n", ERRNO);
+        log("[CRIT] Sending to UDP device failed with error code %d!", ERRNO);
         return false;
     }
     return true;
@@ -254,7 +273,7 @@ int DataSender::tcp_initialize(void) {
 
     // Create the socket
     if ((this->tcp_socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
-        printf("[CRIT] Opening the TCP socket failed with error code %ld!\n", ERRNO);
+        log("[CRIT] Opening the TCP socket failed with error code %ld!", ERRNO);
         return 1;
     }
 
@@ -264,13 +283,13 @@ int DataSender::tcp_initialize(void) {
     local_addr.sin_port        = htons(TCP_PORT);
     local_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     if (bind(this->tcp_socket, reinterpret_cast<struct sockaddr*>(&local_addr), sizeof(local_addr)) == SOCKET_ERROR) {
-        printf("[CRIT] Binding the TCP socket failed with error code %d!\n", ERRNO);
+        log("[CRIT] Binding the TCP socket failed with error code %d!", ERRNO);
         return 1;
     }
 
     // Start listening
     if (listen(this->tcp_socket, SOMAXCONN) == SOCKET_ERROR) {
-        printf("[CRIT] TCP listen failed with error code %d!\n", ERRNO);
+        log("[CRIT] TCP listen failed with error code %d!", ERRNO);
         return 1;
     }
 
@@ -299,7 +318,7 @@ void DataSender::tcp_send_thread(DataSender* data_sender) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(100)); // No connection available
                 continue;
             }
-            printf("[CRIT] TCP accept failed with error code %d!\n", error);
+            log("[CRIT] TCP accept failed with error code %d!", error);
             continue;
         }
 
@@ -310,7 +329,7 @@ void DataSender::tcp_send_thread(DataSender* data_sender) {
 #else
         inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, INET_ADDRSTRLEN);
 #endif
-        printf("[++++] Registered TCP client:\n\tIP: %s, Port: %d\n", client_ip, ntohs(client_addr.sin_port));
+        log("[++++] Registered TCP client:\n\tIP: %s, Port: %d", client_ip, ntohs(client_addr.sin_port));
         data_sender->tcp_zero_packet_count = 0; // Force resend when new client connects
 
         bool success = true;
@@ -328,7 +347,7 @@ void DataSender::tcp_send_thread(DataSender* data_sender) {
             data_sender->state.tcp_send_queued = false;
         }
 
-        printf("[----] Unregistered TCP client:\n\tIP: %s, Port: %d\n", client_ip, ntohs(client_addr.sin_port));
+        log("[----] Unregistered TCP client:\n\tIP: %s, Port: %d", client_ip, ntohs(client_addr.sin_port));
     }
 }
 
@@ -352,4 +371,36 @@ void DataSender::tcp_enqueue(const Packet& packet) {
         this->state.tcp_send_queued = true;
         this->state.tcp_send_queued.notify_all();
     }
+}
+
+int DataSender::ws_initialize(void) {
+    int result = 0;
+
+    // Create and start the websocket thread
+    this->state.ws_running        = true;
+    this->thread_instance.ws_loop = std::make_unique<std::thread>(std::thread(&ws_thread, this));
+
+    return 0;
+}
+
+void DataSender::ws_thread(DataSender* data_sender) {
+#if defined(_WIN32)
+    const char* command = "python -u \"websocket.py\" 2>&1";
+#else
+    const char* command = "python3 -u \"websocket.py\" 2>&1";
+#endif
+    FILE* pipe = OPEN_PIPE(command, "r");
+    log("[++++] Registered WebSocket pipe!");
+    if (pipe) {
+        char buffer[64] = { 0 };
+        while (data_sender->state.ws_running && fgets(buffer, sizeof(buffer), pipe)) {
+            if (buffer[0]) { log_ws(buffer); }
+            buffer[0] = 0;
+        }
+    } else {
+        log("[CRIT] Failed to open WebSocket pipe!");
+    }
+    CLOSE_PIPE(pipe);
+    log("[----] Unregistered WebSocket pipe!");
+    data_sender->state.ws_running = false;
 }
