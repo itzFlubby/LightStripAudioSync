@@ -1,46 +1,77 @@
 #include "AudioCapture.hpp"
-#include "Visualizer.hpp"
+#include "logger.hpp"
 
 #define _USE_MATH_DEFINES
-
 #include <math.h>
 
-Visualizer visualizer;
+#if defined(_WIN32)
+constexpr RtAudio::Api API = RtAudio::Api::WINDOWS_WASAPI;
+#elif defined(__linux__)
+constexpr RtAudio::Api API = RtAudio::Api::LINUX_ALSA;
+#else
+#error "Unsupported platform!"
+#endif
 
-AudioCapture::AudioCapture(DataSender* data_sender, unsigned input_buffer_size, unsigned bins_size) :
-    data_sender(data_sender),
-    input_buffer_size(input_buffer_size) {
-    this->rtaudio = std::make_unique<RtAudio>(RtAudio(RtAudio::WINDOWS_WASAPI));
+AudioCapture::AudioCapture(DataSender* data_sender, std::string device_name, int device_id, int max_channels) : data_sender(data_sender) {
+    this->rtaudio = std::make_unique<RtAudio>(API);
+    if (device_name.empty() && (device_id == -1)) { device_id = this->rtaudio->getDefaultOutputDevice(); }
 
-    printf("[INFO] RtAudio API: %s\n", this->rtaudio->getApiName(this->rtaudio->getCurrentApi()).c_str());
+    std::vector<RtAudio::Api> compiled_apis;
+    RtAudio::getCompiledApi(compiled_apis);
+    log("[INFO] Compiled RtAudio APIs (* is in use):");
+    for (RtAudio::Api api : compiled_apis) {
+        log("  - %s %c", RtAudio::getApiName(api).c_str(), (api == this->rtaudio->getCurrentApi()) ? '*' : ' ');
+    }
 
     if (this->rtaudio->getDeviceCount() < 1) {
-        printf("[CRIT] No audio devices found!\n");
+        log("[CRIT] No audio devices found!");
         return;
     }
 
-    RtAudio::DeviceInfo device_info = this->rtaudio->getDeviceInfo(this->rtaudio->getDefaultOutputDevice());
-    this->parameters.deviceId       = device_info.ID;
-    this->parameters.nChannels      = device_info.outputChannels;
-    this->sample_rate               = device_info.preferredSampleRate;
-    this->input_buffer_size         = input_buffer_size;
-    this->output_buffer_size        = this->input_buffer_size / 2 + 1;
+    std::vector<unsigned> device_ids = this->rtaudio->getDeviceIds();
+    log("[INFO] Available audio devices:");
+    for (unsigned id : device_ids) {
+        RtAudio::DeviceInfo info = this->rtaudio->getDeviceInfo(id);
+        log("  - \"%s\" (%d, %c)", info.name.c_str(), info.ID, (info.inputChannels > 0) ? 'I' : 'O');
 
-    printf(
-        "[++++] Registered audio device:\n\tId: %d\n\tChannels: %d\n\tSample rate: %d\n\tFormats: %#x\n",
+        // Use device id from name if specified
+        if (!device_name.empty() && (info.name == device_name)) { device_id = info.ID; }
+    }
+
+    RtAudio::DeviceInfo device_info = this->rtaudio->getDeviceInfo(device_id);
+    if (device_info.ID != static_cast<unsigned>(device_id)) {
+        log("[CRIT] Specified audio device not found!");
+        return;
+    }
+
+    this->parameters.deviceId  = device_info.ID;
+    unsigned device_channels   = std::max(device_info.outputChannels, device_info.inputChannels);
+    this->parameters.nChannels = (max_channels != -1) ? std::min(static_cast<unsigned>(max_channels), device_channels) : device_channels;
+    this->sample_rate          = device_info.preferredSampleRate;
+    this->input_buffer_size    = INPUT_BUFFER_SIZE;
+    this->output_buffer_size   = this->input_buffer_size / 2 + 1;
+
+    if (this->parameters.nChannels == 0) {
+        log("[CRIT] Selected audio device has no input or output channels!");
+        return;
+    }
+
+    log("[++++] Registered audio device:\n\tId: %d\n\tChannels: %d\n\tSample rate: %d\n\tFormats: %#x",
         this->parameters.deviceId,
         this->parameters.nChannels,
         this->sample_rate,
-        device_info.nativeFormats
-    );
+        device_info.nativeFormats);
 
-    // Reserve memory for magnitude data
-    this->data.resize(this->parameters.nChannels);
+    // Reserve memory for magnitude data (one byte magnitude + one byte log magnitude per channel)
+    this->magnitude_data.resize(this->parameters.nChannels * 2);
+
+    // Reserve memory for bin data
+    this->bin_data.resize(BINS_SIZE * this->parameters.nChannels);
 
     // Initialize the bins
     this->bins.resize(this->parameters.nChannels, {});
     for (unsigned channel_index = 0; channel_index < this->bins.size(); ++channel_index) {
-        this->bins[channel_index].resize(bins_size, {});
+        this->bins[channel_index].resize(BINS_SIZE, {});
         for (unsigned bin_index = 0; bin_index < this->bins[channel_index].size(); ++bin_index) {
             this->bins[channel_index][bin_index].lower_frequency = (bin_index == 0) ? 0 : this->bins[channel_index][bin_index - 1].upper_frequency;
             this->bins[channel_index][bin_index].upper_frequency =
@@ -83,10 +114,12 @@ int AudioCapture::record(void* output_buffer, void* input_buffer, unsigned input
     bool autoscale = ((stream_time - audio_capture->last_autoscale) > (AUTOSCALE_TIME_WINDOW_MS / 1000.));
     if (autoscale) { audio_capture->last_autoscale = stream_time; }
 
-    for (unsigned channel_index = 0; channel_index < audio_capture->parameters.nChannels; ++channel_index) {
+    double* _input_buffer = reinterpret_cast<double*>(input_buffer);
+    unsigned n_channels   = audio_capture->parameters.nChannels;
+
+    for (unsigned channel_index = 0; channel_index < n_channels; ++channel_index) {
         for (unsigned frame_index = 0; frame_index < input_buffer_size; ++frame_index) {
-            audio_capture->fftw_in[frame_index] = (reinterpret_cast<double*>(input_buffer))[frame_index * audio_capture->parameters.nChannels + channel_index]
-                * audio_capture->hann_window[frame_index];
+            audio_capture->fftw_in[frame_index] = _input_buffer[frame_index * n_channels + channel_index] * audio_capture->hann_window[frame_index];
         }
 
         fftw_execute(audio_capture->fftw);
@@ -98,37 +131,42 @@ int AudioCapture::record(void* output_buffer, void* input_buffer, unsigned input
 
         // Bin the magnitudes
         for (unsigned frame_index = 0; frame_index < audio_capture->output_buffer_size; ++frame_index) {
-            double frame_magnitude = std::sqrt(
-                audio_capture->fftw_out[frame_index][0] * audio_capture->fftw_out[frame_index][0]
-                + audio_capture->fftw_out[frame_index][1] * audio_capture->fftw_out[frame_index][1]
-            );
+            double frame_magnitude = audio_capture->fftw_out[frame_index][0] * audio_capture->fftw_out[frame_index][0]
+                + audio_capture->fftw_out[frame_index][1] * audio_capture->fftw_out[frame_index][1]; // Don't sqrt to save computation, relative values are sufficient
             audio_capture->bins[channel_index][audio_capture->frame_index_to_bin_index[frame_index]].magnitude += frame_magnitude;
         }
 
-        // Follow the magnitudes' envelopes
         for (Bin& bin : audio_capture->bins[channel_index]) {
+            // Follow the magnitudes' envelopes
             bin.follow_envelope();
-        }
 
-        // Autoscale the envelopes
-        for (Bin& bin : audio_capture->bins[channel_index]) {
+            // Autoscale the envelopes
             if (bin.envelope > bin.max_envelope) { bin.max_envelope = bin.envelope; }
             if (autoscale && ((bin.max_envelope * AudioCapture::AUTOSCALE_VALUE) > bin.envelope)) { bin.max_envelope *= AudioCapture::AUTOSCALE_VALUE; }
+
+            // Add to bin_data
+            size_t index                                               = &bin - &audio_capture->bins[channel_index][0];
+            audio_capture->bin_data[index + BINS_SIZE * channel_index] = static_cast<uint8_t>(255. * bin.get_normalized_envelope());
         }
 
         // Weights MUST be combined no more than 1.
-        audio_capture->data[channel_index] = static_cast<unsigned char>(std::min(
-            255.
-                * (0.7 * audio_capture->bins[channel_index][0].get_normalized_envelope() + 0.2 * audio_capture->bins[channel_index][1].get_normalized_envelope()
-                   + 0.1 * audio_capture->bins[channel_index][2].get_normalized_envelope()),
-            255.
-        ));
+
+        double (Bin::*envelope)(void);
+        for (unsigned type = 0; type <= 1; ++type) {
+            envelope                                                         = (type == 0) ? &Bin::get_normalized_envelope : &Bin::get_normalized_envelope_log;
+            audio_capture->magnitude_data[channel_index + type * n_channels] = static_cast<unsigned char>(std::min(
+                255.
+                    * (0.7 * (audio_capture->bins[channel_index][0].*envelope)() + 0.2 * (audio_capture->bins[channel_index][1].*envelope)()
+                       + 0.1 * (audio_capture->bins[channel_index][2].*envelope)()),
+                255.
+            ));
+        }
     }
 
-    audio_capture->data_sender->enqueue(Packet(Packet::destination_t::device, Packet::type_t::data, audio_capture->data.data(), audio_capture->data.size()));
-
-    //visualizer.render(audio_capture->bins); // Uncomment to enable console visualizer
-
+    audio_capture->data_sender->udp_enqueue(
+        Packet(Packet::destination_t::device, Packet::type_t::data, audio_capture->magnitude_data.data(), audio_capture->magnitude_data.size())
+    );
+    audio_capture->data_sender->tcp_enqueue(Packet(Packet::destination_t::device, Packet::type_t::data, audio_capture->bin_data.data(), audio_capture->bin_data.size()));
     return 0;
 }
 
@@ -138,17 +176,17 @@ unsigned AudioCapture::open_stream(void) {
              NULL, &(this->parameters), RTAUDIO_FLOAT64, this->sample_rate, &(this->input_buffer_size), AudioCapture::record, reinterpret_cast<void*>(this)
          ))
         != RTAUDIO_NO_ERROR) {
-        printf("[CRIT] Failed to open stream with error code %d!\n", result);
+        log("[CRIT] Failed to open stream with error code %d!", result);
         return result;
     }
 
-    if ((this->fftw = fftw_plan_dft_r2c_1d(this->input_buffer_size, this->fftw_in.data(), this->fftw_out, FFTW_ESTIMATE)) == NULL) {
-        printf("[CRIT] Failed to create FFTW plan!\n");
+    if ((this->fftw = fftw_plan_dft_r2c_1d(this->input_buffer_size, this->fftw_in.data(), this->fftw_out, FFTW_MEASURE)) == NULL) {
+        log("[CRIT] Failed to create FFTW plan!");
         return 1;
     }
 
     if ((result = this->rtaudio->startStream()) != RTAUDIO_NO_ERROR) {
-        printf("[CRIT] Failed to start stream with error code %d!\n", result);
+        log("[CRIT] Failed to start stream with error code %d!", result);
         return result;
     }
 
@@ -159,7 +197,7 @@ unsigned AudioCapture::close_stream(void) {
     RtAudioErrorType result = RTAUDIO_NO_ERROR;
     if (this->rtaudio->isStreamRunning()) {
         if ((result = this->rtaudio->stopStream()) != RTAUDIO_NO_ERROR) {
-            printf("[CRIT] Failed to stop stream with error code %d!\n", result);
+            log("[CRIT] Failed to stop stream with error code %d!", result);
             return result;
         }
     }

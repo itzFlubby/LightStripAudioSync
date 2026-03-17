@@ -1,19 +1,27 @@
 #pragma once
 
 #include "DataSender.hpp"
+
+#if defined(_WIN32)
 #include "FFTW/fftw3.h"
 #include "RtAudio/RtAudio.h"
+#else
+#include <fftw3.h>
+#include <RtAudio.h>
+#endif
+
+#include <cmath>
 
 class AudioCapture {
     private:
         constexpr static unsigned AUTOSCALE_TIME_WINDOW_MS = 1000;
         constexpr static double AUTOSCALE_VALUE            = 0.95;
         constexpr static unsigned INPUT_BUFFER_SIZE        = 1024;
-        constexpr static double MAX_FREQUENCY              = 2000.;
-        constexpr static unsigned BINS_SIZE                = 20;
+        constexpr static double MAX_FREQUENCY              = 5000.;
+        constexpr static unsigned BINS_SIZE                = 30;
 
-        constexpr static double ENVELOPE_FOLLOWER_ATTACK  = 0.99; // Perceived as delay when peak is rising (higher is faster)
-        constexpr static double ENVELOPE_FOLLOWER_RELEASE = 0.40; // Perceived as delay when peak is falling (higher is faster)
+        constexpr static double ENVELOPE_FOLLOWER_ATTACK  = 0.70; // Perceived as delay when peak is rising (higher is faster)
+        constexpr static double ENVELOPE_FOLLOWER_RELEASE = 0.30; // Perceived as delay when peak is falling (higher is faster)
 
         struct Bin {
             public:
@@ -59,8 +67,9 @@ class AudioCapture {
         fftw_complex* fftw_out          = nullptr;
         fftw_plan fftw                  = nullptr;
 
-        DataSender* data_sender   = nullptr;
-        std::vector<uint8_t> data = {};
+        DataSender* data_sender             = nullptr;
+        std::vector<uint8_t> magnitude_data = {};
+        std::vector<uint8_t> bin_data       = {};
 
         double last_autoscale = 0.;
 
@@ -71,7 +80,7 @@ class AudioCapture {
         static int record(void* output_buffer, void* input_buffer, unsigned input_buffer_size, double stream_time, RtAudioStreamStatus status, void* user_data);
 
     public:
-        AudioCapture(DataSender* data_sender, unsigned input_buffer_size = INPUT_BUFFER_SIZE, unsigned bins_size = BINS_SIZE);
+        AudioCapture(DataSender* data_sender, std::string device_name = "", int device_id = -1, int max_channels = -1);
         ~AudioCapture(void);
 
         unsigned initialize(void);

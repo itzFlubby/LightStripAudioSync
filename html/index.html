@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Audiosync Visualizer</title>
+        <link rel="stylesheet" href="index.css">
+        <link rel="stylesheet" href="settings.css">
+        <link rel="stylesheet" href="visualizer.css">
+        <script src="index.js"></script>
+        <script src="settings.js"></script>
+        <script src="background.js"></script>
+        <script src="visualizer.js"></script>
+    </head>
+    <body>
+        <canvas class="background-canvas" id="background-canvas-id"></canvas>
+
+        <div class="loader-container"  id="loader-container-id">
+            <div class="loader"></div>
+        </div>
+
+        <div class="container">
+            <div class="header-container" id="header-container-id">
+                <h1>AUDIOSYNC VISUALIZER</h1>
+            </div>
+
+            <div class="content-container" id="content-container-id">
+                <div class="visualizer-container" id="visualizer-container-id">
+                    <div class="visualizer-channel-labels" style="text-align: left;">
+                        <span>L</span>
+                        <span>R</span>
+                    </div>
+                    <div class="visualizer-canvas">
+                        <canvas id="bars-canvas-id"></canvas>
+                    </div>
+                    <div class="visualizer-channel-labels" style="text-align: right;">
+                        <span>L</span>
+                        <span>R</span>
+                    </div>
+                </div>
+                <div class="settings-container" id="settings-container-id" style="display: none;">
+                    <div class="settings-element">
+                        <input type="text" id="settings-url-id" readonly="true">
+                        <button onclick="settings.settings = settings.get_default(); settings.store(); window.location.href='';">Reset</button>
+                        <button onclick="settings.store(); window.location.href = '';">Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-container" id="control-container-id">
+                <div class="control-element" id="control-ws-dot-id">
+                    <div class="control-ws-dot" id="control-ws-dot-div-id"></div>
+                </div>
+                <div class="control-element" id="control-ws-text-id">
+                    Disconnected
+                </div>
+                <div class="control-element" id="control-ws-input-id">
+                    <input 
+                        type="text" 
+                        id="control-ws-input-url-id" 
+                        value=""
+                        onkeypress="if (event.key === 'Enter') ws_toggle_connection()"
+                    >
+                </div>
+                <div class="control-element" id="control-ws-button-id">
+                    <button id="control-ws-button-connect-id" onclick="ws_toggle_connection()">Connect</button>
+                </div>
+                <div class="control-element" id="control-settings-button-id">
+                    <button id="control-settings-button-settings-id" onclick="show_settings_page()">Settings</button>
+                </div>
+            </div>
+
+            <div class="footer-container" id="footer-container-id">
+                <div class="footer-element" id="footer-element-frames-id"><span>0</span> total frames</div>
+                <div class="footer-element" id="footer-element-fps-id"><span>0.0</span> FPS</div>
+                <div class="footer-element" id="footer-element-seconds-id"><span>0.000</span> seconds</div>
+            </div>
+        </div>
+        <div class="disclaimer">
+            https://github.com/itzFlubby/LightStripAudioSync
+        </div>
+    </body>
+</html>

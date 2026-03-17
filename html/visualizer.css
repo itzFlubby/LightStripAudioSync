@@ -1,0 +1,31 @@
+.visualizer-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+}
+
+.visualizer-canvas {
+    display: flex;
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+.visualizer-channel-labels {
+    min-width: 1.5rem;
+    font-size: 14px;
+    color: rgba(128, 0, 128, 0.75);
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.visualizer-channel-labels span {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
