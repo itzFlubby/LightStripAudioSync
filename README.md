@@ -1,11 +1,18 @@
 # LightStripAudioSync
  
-LightStripAudioSync is a cross-platform tool that analyzes the audio stream of your default audio device.
+`LightStripAudioSync` is a cross-platform tool that analyzes the audio stream of your default audio device.
 It automatically discovers compatible devices on your network and sends them audio-channel-dependent magnitudes, i.e., for displaying a peakmeter. 
 An example config for making [esphome](https://esphome.io/) devices compatible is shown in section `Integrating with esphome`.
 The auto-discovery process is explained in the section `Device discovery`.
 
+In addition, `LightStripAudioSync` has built-in visualizers:
+
+|HTML-/WebSocket-based|Console-based|
+|-|-|
+|![](media/html-visualizer.gif)|![](media/console-visualizer.gif)|
+
 LightStripAudioSync is based on [FFTW3](https://fftw.org) and [RtAudio](https://github.com/thestk/rtaudio).
+
 ## Installation
 
 ### Windows
@@ -27,7 +34,8 @@ LightStripAudioSync is based on [FFTW3](https://fftw.org) and [RtAudio](https://
 
 Hint: if `cmake ..` fails, check `cmake -G` and try building with a specific generator.
 
-6. Run `LightStripAudioSync.exe`
+6. Run `LightStripAudioSync.exe`  
+See section `Configuring` for further detail.
 
 ### Linux
 
@@ -45,7 +53,25 @@ Hint: if `cmake ..` fails, check `cmake -G` and try building with a specific gen
 
 Hint: if `cmake ..` fails, check `cmake -G` and try building with a specific generator.
 
-6. Run `./build/LightStripAudioSync`
+6. Run `./build/LightStripAudioSync`  
+See section `Configuring` for further detail.
+
+## Configuring
+
+When executing, the following optional parameter can be passed:
+
+|Parameter ID|Parameter|Limits|Default|
+|------------|---------|------|-------|
+|1|Init websocket|`ws` or `no_ws`|`no_ws`|
+|2|Capture device name or ID|string or integer|System default|
+|3|Capture device max. channels|integer|System default|
+
+The parameters have to be passed in order of their IDs. All parameters up to the last provided ID have to be passed.
+Capture device names and IDs are system-dependent. To get them simply execute `LightStripAudioSync` without parameters. All audio devices will be listed by name and ID.  
+Examples (calling the executable depends on the used OS):
+
+1. Enable websocket: `LightStripAudioSync.exe ws`
+2. Only use two channels without websocket: `LightStripAudioSync.exe no_ws 0 2` 
 
 ## Device discovery
 
@@ -60,9 +86,9 @@ Register packet: 0x02 0x01 0x00 0x03
 Data packet:     0x02 0x02 0x02 0x31 0x2f 0x03
 ```
 
-For discovering devices, `LightStripAudioSync.exe` sends a discovery packet as a broadcast UDP packet every five seconds on port `3333`.
+For discovering devices, `LightStripAudioSync` sends a discovery packet as a broadcast UDP packet every five seconds on port `3333`.
 Compatible devices on your network must respond to the broadcast with a registration packet on the same port.
-`LightStripAudioSync.exe` will then start sending the device the magnitudes of the audio stream on your default audio device every ~30ms.
+`LightStripAudioSync` will then start sending the device the magnitudes of the audio stream on your default audio device every ~30ms.
 `<LEN>` will be the number of channels of your default audio device, and `<DATA>` the respective magnitudes for each channel.
 
 ## Integrating with esphome
@@ -97,7 +123,7 @@ udp:
               - udp.write:
                   id: lightstrip_audiosync_listener
                   data: !lambda |-
-                    Packet packet(Packet::destination_t::broadcast, Packet::type_t::register_, 0, 0); 
+                    Packet packet(Packet::destination_t::broadcast, Packet::type_t::register_device, 0, 0); 
                     return packet.to_raw();
                     
         - lambda: |-
