@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
             }
         }
     } else if (argc > 4) {
-        log("Usage: LightStripAudioSync <Init. Websocket (opt.)> <Capture device name or id (opt.)> <Capture device max. channels (opt.)>");
+        log("Usage: LightStripAudioSync <Init websocket (opt.)> <Capture device name or ID (opt.)> <Capture device max. channels (opt.)>");
         return 1;
     }
 
