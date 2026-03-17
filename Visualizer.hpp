@@ -165,6 +165,7 @@ class Visualizer {
             std::copy(screen_buffer.begin() + pre, screen_buffer.end(), std::back_inserter(output));
             output.push_back('\0');
 
+            setvbuf(stdout, NULL, _IOFBF, strlen(output.data()));
             printf("%s", output.data());
         }
 };
